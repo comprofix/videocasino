@@ -150,6 +150,16 @@ The shoe is drawn at the end of the table, emptying as the cards are dealt,
 with the cut card standing in it. It shows how far through the shoe is, not
 a count.
 
+The cut card is a plain yellow card. When it comes out it is dealt onto the
+table beside the shoe, as a dealer sets it aside, and lies there while the
+hand is finished from the cards behind it. If it comes out among the
+dealer's cards it takes its turn as they are shown.
+
+Pressing DEAL after that shows the shoe being shuffled before the hand is
+dealt: the cards are riffled together a few times, and the shoe fills up
+again. Space, Enter or a click cuts the shuffle short. It is for show: the
+shoe is shuffled either way.
+
 ### Perfect Pairs
 
 The side bet is on your first two cards being a pair, and is paid as soon
