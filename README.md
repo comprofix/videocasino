@@ -6,6 +6,7 @@ and they are all played from one balance of credits.
 
 | Game | What it is |
 |---|---|
+| Blackjack | Six decks dealt down to a cut card, with doubling, splitting and the Perfect Pairs side bet |
 | Slot Machine | A five-reel slot machine in the style of modern hold-and-respin poker machines, with free games, a link feature and four jackpots |
 | Video Poker | 9/6 "full pay" Jacks or Better: you are dealt five cards, hold the ones you want, draw to replace the rest, and are paid for the hand you end up with |
 
@@ -60,7 +61,7 @@ the main menu.
 
 There is one balance, the bank, and every game plays from it. A bet comes
 out of the bank and a win goes into it, so what you win in one game is
-there to play with in the other.
+there to play with in the others.
 
 You start with 10,000 credits ($100), at 100 credits to the dollar. The
 INSERT COIN button adds 10,000 more whenever you want them, and RESET puts
@@ -74,12 +75,108 @@ you: insert a coin or press RESET to carry on.
 
 Everything is saved after every change, so you can close the program at any
 time and carry on later with the same credits, the same bet in each game,
-and anything left unfinished: a hand that has been dealt but not drawn to,
-free games still to play, or a link feature part-way through. Whether the
-sound is on is kept too.
+and anything left unfinished: a hand that has been dealt but not played
+out, free games still to play, or a link feature part-way through. The
+Blackjack shoe is kept as it stands, and so is whether the sound is on.
 
 The save is one small file, `save.json`, in the folder the program is in.
 Delete it to start again from scratch, jackpot pots included.
+
+Nothing in the save tells you a card before it is dealt. The cards drawn in
+Video Poker are chosen only at the draw. The Blackjack shoe is kept as how
+many of each card are left, not as cards in an order, and the dealer has no
+hidden card.
+
+## Blackjack
+
+Choose a bet, and a Perfect Pairs bet if you want one, then press DEAL. You
+are dealt two cards and the dealer one. Get closer to 21 than the dealer
+without going past it: pictures count 10 and an ace 1 or 11.
+
+| Buttons | Choices |
+|---|---|
+| Bet | 10, 20, 50, 100 or 500 credits |
+| Perfect Pairs bet | Off, or 5, 10, 25 or 50 credits |
+| HIT | Take another card |
+| STAND | Play the hand as it is |
+| DOUBLE | Double the bet for one more card |
+| SPLIT | Make two hands of two cards that count the same |
+| HINT | Mark the best play |
+
+The keyboard works too:
+
+| Key | Action |
+|---|---|
+| Space or Enter | Deal |
+| 1, 2, 3, 4 | Hit, stand, double, split |
+| H | Hint: mark the best play |
+| Up / Down | Change the bet |
+| Left / Right | Change the Perfect Pairs bet |
+| C | Insert a coin |
+| R | Reset your credits |
+| S | Sound on or off |
+| Esc | Back to the menu |
+
+### Rules
+
+| Rule | How it is played here |
+|---|---|
+| Blackjack | An ace and a ten or a picture in your first two cards. It pays 3 to 2 |
+| Dealer | Draws to 17 and stands on any 17, soft or hard |
+| Double | On a hard 9, 10 or 11 in your first two cards only. A hand with an ace is soft: an ace and an eight is a soft 19, not a 9 |
+| Split | Once, on any two cards that count the same, so a king and a queen can be split. Each hand can be doubled |
+| Split aces | One card each. A ten on one makes 21, which pays even money: it is not a blackjack |
+| Dealer's blackjack | Takes only the bet you first made. Anything added by doubling or splitting is returned, even on a hand that went bust |
+| Push | The same total as the dealer returns your bet |
+
+There is no insurance and no surrender.
+
+The dealer has no hidden card. A card lies face down beside the dealer's
+first for the look of the table, but no card has been drawn for it: the
+dealer's second card is drawn after you have played. A dealer's blackjack
+can therefore only turn up at the end of the hand, which is why it takes
+your first bet and no more.
+
+### The shoe
+
+The game is dealt from six decks. Hands are dealt from the shoe one after
+another, so a card that has been played stays out until the next shuffle.
+At each shuffle a cut card is put in at random between two thirds and five
+sixths of the way through, so between one deck and two are never dealt.
+When the cut card comes out the hand being played is finished, and the shoe
+is shuffled before the next.
+
+The shoe is drawn at the end of the table, emptying as the cards are dealt,
+with the cut card standing in it. It shows how far through the shoe is, not
+a count.
+
+### Perfect Pairs
+
+The side bet is on your first two cards being a pair, and is paid as soon
+as they are dealt, whatever happens to the hand afterwards.
+
+| Pair | Example | Pays |
+|---|---|---|
+| Perfect: the same card twice | Two kings of hearts | 25 to 1 |
+| Coloured: the same rank and colour | King of hearts, king of diamonds | 12 to 1 |
+| Mixed: the same rank, one red and one black | King of hearts, king of spades | 6 to 1 |
+
+A pair here is two cards of the same rank. A king and a queen can be split,
+but they are not a pair.
+
+### Hints
+
+HINT marks the best play and says what the hand is then worth on average.
+It is worked out from the cards actually left in the shoe, so the advice
+moves as the shoe runs down: it is the play a perfect card counter would
+make.
+
+It is exact for hit, stand and double. Splitting cannot be weighed up
+exactly in any reasonable time, because the two hands share a shoe and a
+dealer and the best play of one depends on every way the other could go. A
+split is weighed up from the cards on the table, as if the other hand were
+to draw no more. That is exact for the second of the two hands once the
+first is finished, and close for the rest.
 
 ## Slot Machine
 
@@ -271,13 +368,38 @@ check them against a great many hands and spins played out. Run the tests
 to recalculate them after changing a paytable or the rules:
 
 ```
+go test -v ./games/blackjack/table/
 go test -v ./games/slot/machine/
 go test -v ./games/videopoker/poker/
 ```
 
 Every card and every spin is drawn from a cryptographic random number
 generator seeded by the operating system, and seeded afresh every hundred
-hands or spins. None depends on the ones before it.
+hands or spins. No spin of the Slot Machine and no hand of Video Poker
+depends on the ones before it. Blackjack is the exception by design: its
+hands come from one shoe until it is shuffled.
+
+### Blackjack
+
+From a freshly shuffled shoe, played perfectly without splitting, the game
+pays back 98.94% of what is bet. Splitting when it is worth it pays back a
+little more; that part is not worked out exactly, for the reason given
+under Hints.
+
+That figure is for the first hand after a shuffle. As the shoe runs down,
+what a hand pays back moves with the cards left in it, and the return over
+a whole shoe dealt down to the cut card is not worked out.
+
+Perfect Pairs pays back 93.89% of what is bet on it from a freshly shuffled
+shoe, and that too moves as the shoe runs down:
+
+| Pair | How often | Share of what is bet |
+|---|---|---|
+| Perfect | 5 times in 311 | 41.80% |
+| Coloured | 6 times in 311 | 25.08% |
+| Mixed | 12 times in 311 | 27.01% |
+
+A pair of some kind comes up about once in 13.5 hands.
 
 ### Slot Machine
 
@@ -326,6 +448,8 @@ perfect play, which auto hold gives you; holding by feel pays back less.
 - `cards/` holds the card, rank and suit types that card games share.
 - `ui/` has the palette, text, shapes, buttons, card drawing and sound
   that every game uses.
+- `games/blackjack/` has Blackjack's screens, with its rules in
+  `games/blackjack/table/`.
 - `games/slot/` has the Slot Machine's screens, with its rules in
   `games/slot/machine/`.
 - `games/videopoker/` has Video Poker's screens, with its rules in
