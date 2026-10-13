@@ -1,0 +1,835 @@
+// Package blackjack is Blackjack with the Perfect Pairs side bet, played
+// for pretend credits from the bank. Its rules are in the table package.
+package blackjack
+
+import (
+	"fmt"
+	"image/color"
+	"strings"
+	"sync/atomic"
+
+	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
+
+	"videocasino/bank"
+	"videocasino/cards"
+	"videocasino/games/blackjack/table"
+	"videocasino/ui"
+)
+
+const (
+	// The cards are drawn smaller than in a hand of five, and overlapped,
+	// as a hand can run to many of them.
+	cardScale = 0.75
+	cardW     = ui.CardW * cardScale
+	cardH     = ui.CardH * cardScale
+	cardStep  = 40 // how far each card sits from the one before: enough to show its rank
+
+	// The dealer's hand stops short of the shoe, which sits at the end of
+	// the table.
+	dealerW = 230
+
+	// The table takes up the left of the screen: the dealer's hand above
+	// the player's. What the game pays is listed down the right.
+	tableX  = 30
+	tableW  = 540
+	dealerY = 42
+	playerY = 204
+	panelX  = 590
+	panelW  = 180
+
+	messageY = 340
+	statY    = 364
+
+	// Three rows of buttons at the bottom: what to do with the hand, the
+	// bet, and the Perfect Pairs bet.
+	rowAY   = 428
+	rowBY   = 466
+	rowCY   = 504
+	buttonH = 34
+	buttonW = 104
+	gap     = 6
+
+	// revealTicks is the time between one of the dealer's cards being
+	// dealt and the next.
+	revealTicks = 18
+)
+
+// felt is the table the cards lie on.
+var felt = color.RGBA{0, 72, 32, 255}
+
+type scene int
+
+const (
+	sceneMenu scene = iota
+	sceneHelp
+	sceneAbout
+	scenePlay
+)
+
+type Game struct {
+	scene scene
+	ticks int
+	snd   *ui.Sounds
+	bank  *bank.Bank
+
+	m *table.Machine
+
+	// What the game pays back from a fresh shoe takes a moment to work out,
+	// so that is done in the background while the program starts. Until it
+	// is ready this is nil.
+	odds atomic.Pointer[table.Odds]
+
+	// The machine settles a hand all at once. The dealer's cards are then
+	// shown one by one, and the result once the last is down.
+	revealing   bool
+	dealerShown int // how many of the dealer's cards are on show
+	revealAt    int // the tick at which the next is shown
+
+	hint    table.Action
+	hinting bool // the hint is on show
+
+	credits int // credits on display; a win is added once the dealer has played
+	win     int
+	message string
+
+	saveFailed bool
+}
+
+// New returns the game, playing from the given bank and picking up whatever
+// it last kept there.
+func New(b *bank.Bank, snd *ui.Sounds) *Game {
+	g := &Game{snd: snd, bank: b}
+	g.m = table.NewRandom(b)
+	g.message = "CHOOSE YOUR BET AND PRESS DEAL"
+
+	var s table.Saved
+	if b.Load(saveName, &s) {
+		g.m.Restore(s)
+		g.resume()
+	}
+	g.credits = b.Credits
+
+	go func() {
+		g.odds.Store(table.NewOdds())
+	}()
+	return g
+}
+
+// resume puts back on screen a hand that was still to be played when the
+// game was last closed.
+func (g *Game) resume() {
+	if g.m.Dealt {
+		g.dealerShown = len(g.m.Dealer)
+		g.win = g.m.SideWin
+		g.message = "HAND TO FINISH - " + g.prompt()
+	}
+}
+
+// The buttons for the hand, in the order of the keys that work them.
+var actions = [...]table.Action{table.ActHit, table.ActStand, table.ActDouble, table.ActSplit}
+
+func rowButton(i int, y float64) ui.Button {
+	return ui.Button{X: tableX + float64(i)*(buttonW+gap), Y: y, W: buttonW, H: buttonH}
+}
+
+// actionButton is the button for one of the actions, and hintButton the one
+// that ends their row.
+func actionButton(i int) ui.Button { return rowButton(i, rowAY) }
+func betButton(i int) ui.Button    { return rowButton(i, rowBY) }
+func sideButton(i int) ui.Button   { return rowButton(i, rowCY) }
+
+var (
+	hintButton  = rowButton(len(actions), rowAY)
+	dealButton  = ui.Button{X: 580, Y: rowAY, W: 190, H: rowBY + buttonH - rowAY} // as tall as two rows
+	coinButton  = ui.Button{X: 580, Y: rowCY, W: 120, H: buttonH}
+	resetButton = ui.Button{X: 706, Y: rowCY, W: 64, H: buttonH}
+)
+
+// The keys for each action, along the top of the keyboard and on the
+// number pad.
+var actionKeys = [len(actions)][2]ebiten.Key{
+	{ebiten.KeyDigit1, ebiten.KeyNumpad1},
+	{ebiten.KeyDigit2, ebiten.KeyNumpad2},
+	{ebiten.KeyDigit3, ebiten.KeyNumpad3},
+	{ebiten.KeyDigit4, ebiten.KeyNumpad4},
+}
+
+// Update plays one tick. It reports true when the player has asked to go
+// back to the main menu.
+func (g *Game) Update() (leave bool) {
+	g.ticks++
+
+	switch g.scene {
+	case sceneMenu:
+		switch {
+		case ui.Pressed(ebiten.KeyDigit1, ebiten.KeyNumpad1):
+			g.scene = sceneHelp
+		case ui.Pressed(ebiten.KeyDigit2, ebiten.KeyNumpad2):
+			g.scene = scenePlay
+		case ui.Pressed(ebiten.KeyDigit3, ebiten.KeyNumpad3):
+			g.scene = sceneAbout
+		case ui.Pressed(ebiten.KeyDigit4, ebiten.KeyNumpad4, ebiten.KeyEscape):
+			return true
+		}
+
+	case sceneHelp, sceneAbout:
+		if ui.Pressed(ebiten.KeyEnter, ebiten.KeyNumpadEnter, ebiten.KeySpace, ebiten.KeyEscape) {
+			g.scene = sceneMenu
+		}
+
+	case scenePlay:
+		g.updatePlay()
+	}
+	return false
+}
+
+func (g *Game) updatePlay() {
+	if g.revealing {
+		g.reveal()
+		return
+	}
+	// The bank may have changed while the game was not being played.
+	g.credits = g.bank.Credits
+	if ui.Pressed(ebiten.KeyEscape) {
+		g.scene = sceneMenu
+		return
+	}
+
+	click := inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft)
+	x, y := ebiten.CursorPosition()
+	hit := func(b ui.Button) bool { return click && b.Hit(x, y) }
+
+	if ui.Pressed(ebiten.KeyC) || hit(coinButton) {
+		g.insertCoin()
+	}
+	if ui.Pressed(ebiten.KeyR) || hit(resetButton) {
+		g.reset()
+	}
+
+	// While a hand is being played it is all that can be changed: the bets
+	// stay as they were dealt.
+	if g.m.Dealt {
+		for i, a := range actions {
+			if ui.Pressed(actionKeys[i][:]...) || hit(actionButton(i)) {
+				g.act(a)
+				return
+			}
+		}
+		if ui.Pressed(ebiten.KeyH) || hit(hintButton) {
+			g.showHint()
+		}
+		return
+	}
+
+	for i, n := range table.BetChoices {
+		if hit(betButton(i)) {
+			g.setBet(n)
+		}
+	}
+	for i, n := range table.SideChoices {
+		if hit(sideButton(i)) {
+			g.setSideBet(n)
+		}
+	}
+	switch {
+	case ui.Pressed(ebiten.KeyArrowUp):
+		g.setBet(ui.Step(table.BetChoices, g.m.Bet, 1))
+	case ui.Pressed(ebiten.KeyArrowDown):
+		g.setBet(ui.Step(table.BetChoices, g.m.Bet, -1))
+	case ui.Pressed(ebiten.KeyArrowRight):
+		g.setSideBet(ui.Step(table.SideChoices, g.m.SideBet, 1))
+	case ui.Pressed(ebiten.KeyArrowLeft):
+		g.setSideBet(ui.Step(table.SideChoices, g.m.SideBet, -1))
+	case ui.Pressed(ebiten.KeySpace, ebiten.KeyEnter, ebiten.KeyNumpadEnter) || hit(dealButton):
+		g.deal()
+	}
+}
+
+// clearWin takes the last hand's win off the display. The cards stay.
+func (g *Game) clearWin() {
+	g.win = 0
+	g.message = ""
+}
+
+func (g *Game) setBet(n int) {
+	g.m.Bet = n
+	g.clearWin()
+	g.snd.Play(g.snd.Click)
+	g.save()
+}
+
+func (g *Game) setSideBet(n int) {
+	g.m.SideBet = n
+	g.clearWin()
+	g.snd.Play(g.snd.Click)
+	g.save()
+}
+
+const outOfCredits = "OUT OF CREDITS - INSERT A COIN OR RESET"
+
+// reset puts the bank's credits back to the starting amount. The bets are
+// left as they are, and so is a hand that is being played.
+func (g *Game) reset() {
+	g.bank.Reset()
+	g.credits = g.bank.Credits
+	g.message = "CREDITS RESET"
+	g.snd.Play(g.snd.Click)
+	g.save()
+}
+
+// insertCoin adds credits to the bank, so play can go on after they run
+// out.
+func (g *Game) insertCoin() {
+	g.bank.InsertCoin()
+	g.credits = g.bank.Credits
+	g.message = fmt.Sprintf("COIN INSERTED - %d CREDITS ADDED", bank.CoinCredits)
+	g.snd.Play(g.snd.Coin)
+	g.save()
+}
+
+// deal takes the bets and deals a hand. Perfect Pairs is settled there and
+// then. With too few credits nothing is dealt: the bank is every game's,
+// so it is for the player to insert a coin or reset it.
+func (g *Game) deal() {
+	if !g.m.Deal() {
+		g.clearWin()
+		g.message = "NOT ENOUGH CREDITS - INSERT A COIN OR BET LESS"
+		if g.bank.Credits == 0 {
+			g.message = outOfCredits
+		}
+		return
+	}
+	g.hinting = false
+	g.win = g.m.SideWin
+	g.dealerShown = 1
+	g.snd.Play(g.snd.Card)
+	if g.m.SideWin > 0 {
+		g.snd.Play(g.snd.Win)
+	}
+	g.save()
+	g.after()
+}
+
+// pairNote says how Perfect Pairs went for the hand on the table, if
+// anything was bet on it.
+func (g *Game) pairNote() string {
+	switch {
+	case g.m.Side == 0:
+		return ""
+	case g.m.Pair == table.NoPair:
+		return "NO PAIR - "
+	}
+	return fmt.Sprintf("%s PAYS %d! - ", strings.ToUpper(g.m.Pair.String()), g.m.SideWin)
+}
+
+// prompt says what can be done with the hand being played.
+func (g *Game) prompt() string {
+	can := "HIT OR STAND"
+	switch double, split := g.m.CanDouble(), g.m.CanSplit(); {
+	case double && split:
+		can = "HIT, STAND, DOUBLE OR SPLIT"
+	case double:
+		can = "HIT, STAND OR DOUBLE"
+	}
+	if len(g.m.Hands) == 2 {
+		return fmt.Sprintf("HAND %d: %s", g.m.Active+1, can)
+	}
+	return can
+}
+
+// act does something with the hand being played.
+func (g *Game) act(a table.Action) {
+	ok := false
+	switch a {
+	case table.ActHit:
+		ok = g.m.Hit()
+	case table.ActStand:
+		ok = g.m.Stand()
+	case table.ActDouble:
+		ok = g.m.Double()
+	case table.ActSplit:
+		ok = g.m.Split()
+	}
+	if !ok {
+		// Only a double or a split can be refused while a hand is in play.
+		g.message = fmt.Sprintf("CANNOT %s THIS HAND", strings.ToUpper(a.String()))
+		return
+	}
+	g.hinting = false
+	if a == table.ActStand {
+		g.snd.Play(g.snd.Click)
+	} else {
+		g.snd.Play(g.snd.Card)
+	}
+	// The machine settles the hand straight away, so it is safe to save
+	// even though the dealer's cards have yet to be shown.
+	g.save()
+	g.after()
+}
+
+// after catches up with the machine once a card has been dealt: there is
+// either more of the hand to play, or the dealer's cards to show.
+func (g *Game) after() {
+	if g.m.Dealt {
+		g.credits = g.bank.Credits
+		g.message = g.pairNote() + g.prompt()
+		return
+	}
+	g.credits = g.bank.Credits - g.m.Last.Paid
+	g.message = ""
+	g.revealing = true
+	g.revealAt = g.ticks + revealTicks
+}
+
+// reveal carries on showing the dealer's cards, and when the last one is
+// down says how the hand went.
+func (g *Game) reveal() {
+	if g.ticks < g.revealAt {
+		return
+	}
+	if g.dealerShown < len(g.m.Dealer) {
+		g.dealerShown++
+		g.revealAt = g.ticks + revealTicks
+		g.snd.Play(g.snd.Card)
+		return
+	}
+	g.revealing = false
+	g.credits = g.bank.Credits
+
+	r := g.m.Last
+	net := r.Paid - r.Staked
+	g.win = g.m.SideWin + max(net, 0)
+	g.message = g.result()
+	switch {
+	case r.Outcomes[0] == table.WonBlackjack:
+		g.snd.Play(g.snd.BigWin)
+	case net > 0:
+		g.snd.Play(g.snd.Win)
+	}
+}
+
+// result says how the hand last played went.
+func (g *Game) result() string {
+	r := g.m.Last
+	net := r.Paid - r.Staked
+	money := "NOTHING WON OR LOST"
+	switch {
+	case net > 0:
+		money = fmt.Sprintf("YOU WIN %d!", net)
+	case net < 0:
+		money = fmt.Sprintf("YOU LOSE %d", -net)
+	}
+
+	switch {
+	case r.Outcomes[0] == table.WonBlackjack:
+		return "BLACKJACK! " + money
+	case r.DealerBlackjack && r.Outcomes[0] == table.Pushed:
+		return "BOTH HAVE BLACKJACK - PUSH"
+	case r.DealerBlackjack:
+		return "DEALER HAS BLACKJACK - " + money
+	}
+
+	if len(r.Outcomes) == 1 {
+		switch {
+		case r.Outcomes[0] == table.Won:
+			return money
+		case r.Outcomes[0] == table.Pushed:
+			return "PUSH - YOUR BET IS RETURNED"
+		case g.m.Hands[0].Bust():
+			return "BUST - " + money
+		}
+		return "DEALER WINS - " + money
+	}
+
+	var parts []string
+	for i, o := range r.Outcomes {
+		how := "LOSES"
+		switch o {
+		case table.Won:
+			how = "WINS"
+		case table.Pushed:
+			how = "PUSHES"
+		}
+		parts = append(parts, fmt.Sprintf("HAND %d %s", i+1, how))
+	}
+	return strings.Join(parts, ", ") + " - " + money
+}
+
+// showHint marks the best thing to do with the hand, without doing it. It
+// is worked out from the cards left in the shoe.
+func (g *Game) showHint() {
+	a, ok := table.BestPlay(g.m)
+	if !ok {
+		return
+	}
+	g.hint, g.hinting = a.Best, true
+	g.snd.Play(g.snd.Click)
+	g.message = fmt.Sprintf("BEST PLAY: %s - WORTH %+.1f CREDITS ON AVERAGE",
+		strings.ToUpper(a.Best.String()), a.Value()*float64(g.m.Stake))
+}
+
+func (g *Game) Draw(screen *ebiten.Image) {
+	screen.Fill(felt)
+	ui.DrawBorder(screen, ui.Brown)
+
+	switch g.scene {
+	case sceneMenu:
+		g.drawMenu(screen)
+	case sceneHelp:
+		g.drawHelp(screen)
+	case sceneAbout:
+		g.drawAbout(screen)
+	case scenePlay:
+		g.drawPlay(screen)
+	}
+}
+
+func (g *Game) drawMenu(screen *ebiten.Image) {
+	ui.DrawText(screen, "BLACKJACK", ui.ScreenW/2, 70, 48, ui.Yellow, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "WITH PERFECT PAIRS", ui.ScreenW/2, 128, 20, ui.White, ui.AlignCenter, ui.AlignStart)
+
+	items := []string{"HOW TO PLAY GAME", "PLAY GAME", "ABOUT THIS GAME", "BACK TO MAIN MENU"}
+	for i, item := range items {
+		y := 190 + float64(i)*36
+		ui.DrawText(screen, fmt.Sprintf("%d.", i+1), ui.ScreenW/2-130, y, 24, ui.White, ui.AlignStart, ui.AlignStart)
+		ui.DrawText(screen, item, ui.ScreenW/2-90, y, 24, ui.LightRed, ui.AlignStart, ui.AlignStart)
+	}
+	ui.DrawText(screen, "MAKE YOUR CHOICE", ui.ScreenW/2, 350, 24, ui.LightCyan, ui.AlignCenter, ui.AlignStart)
+
+	// A blackjack, for luck.
+	const scale = 0.62
+	ui.DrawCard(screen, cards.New(cards.Ace, cards.Spades), ui.ScreenW/2-ui.CardW*scale-5, 420, scale)
+	ui.DrawCard(screen, cards.New(cards.Jack, cards.Spades), ui.ScreenW/2+5, 420, scale)
+}
+
+func (g *Game) drawHelp(screen *ebiten.Image) {
+	ui.DrawText(screen, "HOW TO PLAY", ui.ScreenW/2, 22, 30, ui.Yellow, ui.AlignCenter, ui.AlignStart)
+
+	pays := table.PairPays
+	lines := []string{
+		"Choose a bet, and a Perfect Pairs bet if you want one, then deal.",
+		"Get closer to 21 than the dealer without going past it. Pictures count",
+		fmt.Sprintf("10 and an ace 1 or 11. The dealer draws to %d and stands on any %d.",
+			table.DealerStands, table.DealerStands),
+		"A blackjack, an ace and a ten in your first two cards, pays 3 to 2.",
+		fmt.Sprintf("DOUBLE doubles the bet for one more card, on a hard %d, %d or %d only.",
+			table.DoubleFrom, table.DoubleFrom+1, table.DoubleTo),
+		"SPLIT makes two hands of two cards that count the same, once. Split",
+		"aces get one card each, and 21 after a split is not a blackjack.",
+		"If the dealer makes a blackjack you lose only the bet you first made.",
+		fmt.Sprintf("Perfect Pairs is paid on your first two cards: %d for the same card", pays[table.PerfectPair]),
+		fmt.Sprintf("twice, %d for the same rank and colour, %d for the same rank. A king",
+			pays[table.ColouredPair], pays[table.MixedPair]),
+		"and a queen can be split, but they are not a pair.",
+		fmt.Sprintf("The %d decks are dealt down to a cut card, then shuffled. HINT works", table.Decks),
+		"from the cards left in the shoe: exactly for hit, stand and double, and",
+		"for a split without the cards the other hand has still to draw.",
+	}
+	for i, l := range lines {
+		ui.DrawText(screen, l, ui.ScreenW/2-275, 60+float64(i)*18, 15, ui.White, ui.AlignStart, ui.AlignStart)
+	}
+
+	keys := [][2]string{
+		{"SPACE or ENTER", "deal"},
+		{"1, 2, 3, 4", "hit, stand, double, split"},
+		{"H", "hint: mark the best play"},
+		{"UP / DOWN", "change the bet"},
+		{"LEFT / RIGHT", "change the Perfect Pairs bet"},
+		{"C", "insert a coin for more credits"},
+		{"R", "reset your credits"},
+		{"S", "sound on or off"},
+		{"ESC", "back to the menu"},
+	}
+	for i, k := range keys {
+		y := 322 + float64(i)*18
+		ui.DrawText(screen, k[0], ui.ScreenW/2-70, y, 14, ui.LightRed, ui.AlignEnd, ui.AlignStart)
+		ui.DrawText(screen, k[1], ui.ScreenW/2-45, y, 14, ui.White, ui.AlignStart, ui.AlignStart)
+	}
+	ui.DrawText(screen, "The buttons on screen can be clicked with the mouse.", ui.ScreenW/2, 494, 13, ui.LightGray, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "PRESS ENTER TO RETURN", ui.ScreenW/2, 546, 20, ui.LightCyan, ui.AlignCenter, ui.AlignStart)
+}
+
+func (g *Game) drawAbout(screen *ebiten.Image) {
+	ui.DrawText(screen, "ABOUT THIS GAME", ui.ScreenW/2, 50, 36, ui.Yellow, ui.AlignCenter, ui.AlignStart)
+
+	returns := "Working out what it pays back..."
+	if o := g.odds.Load(); o != nil {
+		returns = fmt.Sprintf("without splitting, it pays back %.2f%% of what is bet.", o.Return()*100)
+	}
+	lines := []string{
+		"Blackjack is written in Go with Ebitengine.",
+		"",
+		fmt.Sprintf("It is dealt from %d decks down to a cut card, then shuffled.", table.Decks),
+		"",
+		"From a freshly shuffled shoe, played perfectly",
+		returns,
+		fmt.Sprintf("Perfect Pairs then pays back %.2f%% of what is bet on it.", table.PairReturn()*100),
+		"",
+		"Both change from hand to hand as the shoe runs down.",
+		"",
+		"It is played with pretend credits only.",
+		"No real money goes in or comes out.",
+	}
+	for i, l := range lines {
+		ui.DrawText(screen, l, ui.ScreenW/2, 130+float64(i)*28, 18, ui.White, ui.AlignCenter, ui.AlignStart)
+	}
+	ui.DrawText(screen, "PRESS ENTER TO RETURN", ui.ScreenW/2, 500, 20, ui.LightCyan, ui.AlignCenter, ui.AlignStart)
+}
+
+// drawCards draws a hand overlapped and centred on cx, squeezed up if it
+// would be wider than width. It is followed by the given number of cards
+// lying face down.
+func drawCards(screen *ebiten.Image, hand []cards.Card, backs int, cx, y, width float64) {
+	n := len(hand) + backs
+	step := float64(cardStep)
+	if n > 1 {
+		step = min(step, (width-cardW)/float64(n-1))
+	}
+	x := cx - (cardW+step*float64(n-1))/2
+	for _, c := range hand {
+		ui.DrawCard(screen, c, x, y, cardScale)
+		x += step
+	}
+	for range backs {
+		ui.DrawCardBack(screen, x, y, cardScale)
+		x += step
+	}
+}
+
+// totalText writes what a hand adds up to.
+func totalText(hand []cards.Card) string {
+	total, soft := table.Total(hand)
+	switch {
+	case table.IsBlackjack(hand):
+		return "21"
+	case total > 21:
+		return fmt.Sprintf("%d BUST", total)
+	case soft:
+		return fmt.Sprintf("SOFT %d", total)
+	}
+	return fmt.Sprint(total)
+}
+
+func (g *Game) drawPlay(screen *ebiten.Image) {
+	g.drawPanel(screen)
+	const centre = tableX + tableW/2
+
+	// The dealer's hand. Until the first deal the cards lie face down.
+	//
+	// While only one of the dealer's cards is on show a second lies face
+	// down beside it, as at a table where the dealer is dealt two. It is
+	// there for the look: no card has been drawn for it, so there is
+	// nothing hidden to be learnt. The card that takes its place is drawn
+	// when the dealer plays.
+	dealer := g.m.Dealer[:min(g.dealerShown, len(g.m.Dealer))]
+	label := "DEALER"
+	switch len(dealer) {
+	case 0:
+		drawCards(screen, nil, 2, centre, dealerY, dealerW)
+	case 1:
+		label = "DEALER: " + totalText(dealer)
+		drawCards(screen, dealer, 1, centre, dealerY, dealerW)
+	default:
+		label = "DEALER: " + totalText(dealer)
+		drawCards(screen, dealer, 0, centre, dealerY, dealerW)
+	}
+	ui.DrawText(screen, label, centre, dealerY-17, 13, ui.White, ui.AlignCenter, ui.AlignStart)
+
+	// The player's hand, or the two it was split into.
+	if len(g.m.Hands) == 0 {
+		drawCards(screen, nil, 2, centre, playerY, tableW-60)
+		ui.DrawText(screen, "YOUR HAND", centre, playerY-17, 13, ui.White, ui.AlignCenter, ui.AlignStart)
+	}
+	for i := range g.m.Hands {
+		h := &g.m.Hands[i]
+		cx, width, name := float64(centre), float64(tableW-60), "YOUR HAND"
+		if len(g.m.Hands) == 2 {
+			cx = tableX + tableW/4 + float64(i)*tableW/2
+			width = tableW/2 - 30
+			name = fmt.Sprintf("HAND %d", i+1)
+		}
+		ink := color.Color(ui.White)
+		if g.m.Dealt && i == g.m.Active {
+			ink = ui.Yellow
+		}
+		label := fmt.Sprintf("%s: %s    BET %d", name, totalText(h.Cards), h.Bet)
+		ui.DrawText(screen, label, cx, playerY-17, 13, ink, ui.AlignCenter, ui.AlignStart)
+		drawCards(screen, h.Cards, 0, cx, playerY, width)
+
+		// Once the dealer has played, each hand is marked with how it went.
+		if !g.m.Dealt && !g.revealing && i < len(g.m.Last.Outcomes) {
+			tag, fill := "LOST", color.Color(ui.Red)
+			switch g.m.Last.Outcomes[i] {
+			case table.Won:
+				tag, fill = "WON", ui.Green
+			case table.WonBlackjack:
+				tag, fill = "BLACKJACK", ui.Green
+			case table.Pushed:
+				tag, fill = "PUSH", ui.Blue
+			}
+			const tagW, tagH = 96, 20
+			ui.FillRect(screen, cx-tagW/2, playerY+cardH-tagH-6, tagW, tagH, fill)
+			ui.DrawText(screen, tag, cx, playerY+cardH-tagH/2-6, 13, ui.White, ui.AlignCenter, ui.AlignCenter)
+		}
+	}
+
+	g.drawShoe(screen)
+
+	ui.DrawText(screen, g.message, centre, messageY, 15, ui.Yellow, ui.AlignCenter, ui.AlignStart)
+
+	// The bets on show are the ones the hand was dealt for while it is
+	// being played, and the ones chosen for the next otherwise.
+	bet, side := g.m.Bet, g.m.SideBet
+	if g.m.Dealt || g.revealing {
+		bet, side = g.m.Stake, g.m.Side
+	}
+	drawStat(screen, "CREDITS", g.credits, 0, ui.LightGreen)
+	drawStat(screen, "BET", bet, 1, ui.White)
+	drawStat(screen, "PERFECT PAIRS BET", side, 2, ui.White)
+	drawStat(screen, "WIN", g.win, 3, ui.Yellow)
+
+	// The hand's buttons work only while there is a hand to play, and the
+	// bets only between hands.
+	playing := g.m.Dealt && !g.revealing
+	for i, a := range actions {
+		locked := !playing
+		switch a {
+		case table.ActDouble:
+			locked = !playing || !g.m.CanDouble()
+		case table.ActSplit:
+			locked = !playing || !g.m.CanSplit()
+		}
+		lit := playing && g.hinting && g.hint == a
+		ui.DrawButton(screen, actionButton(i), lit, locked, 13, fmt.Sprintf("%d %s", i+1, strings.ToUpper(a.String())))
+	}
+	ui.DrawButton(screen, hintButton, false, !playing, 13, "HINT")
+
+	locked := g.m.Dealt || g.revealing
+	for i, n := range table.BetChoices {
+		ui.DrawButton(screen, betButton(i), n == g.m.Bet, locked, 13, fmt.Sprintf("BET %d", n))
+	}
+	for i, n := range table.SideChoices {
+		label := fmt.Sprintf("PAIRS %d", n)
+		if n == 0 {
+			label = "PAIRS OFF"
+		}
+		ui.DrawButton(screen, sideButton(i), n == g.m.SideBet, locked, 13, label)
+	}
+
+	b := dealButton
+	fill, edge, ink := color.Color(ui.Green), color.Color(ui.LightGreen), color.Color(ui.White)
+	if locked {
+		fill, edge, ink = ui.Black, ui.DarkGray, ui.DarkGray
+	}
+	ui.FillRect(screen, b.X, b.Y, b.W, b.H, fill)
+	ui.FrameRect(screen, b.X, b.Y, b.W, b.H, 2, edge)
+	ui.DrawText(screen, "DEAL", b.X+b.W/2, b.Y+b.H/2, 28, ink, ui.AlignCenter, ui.AlignCenter)
+
+	ui.DrawCoinButton(screen, coinButton, 11, fmt.Sprintf("COIN +$%d", bank.CoinCredits/100))
+	ui.DrawResetButton(screen, resetButton, 11)
+
+	sound := "ON"
+	if !g.snd.On {
+		sound = "OFF"
+	}
+	hint := fmt.Sprintf("SPACE deal    1-4 play    H hint    UP/DOWN bet    LEFT/RIGHT pairs bet    C coin    R reset    S sound %s    ESC menu", sound)
+	ui.DrawText(screen, hint, ui.ScreenW/2, 552, 11, ui.LightGray, ui.AlignCenter, ui.AlignStart)
+}
+
+// drawPanel lists what the game pays down the right of the table.
+func (g *Game) drawPanel(screen *ebiten.Image) {
+	const top, height = dealerY - 17, playerY + cardH - dealerY + 17
+	ui.FillRect(screen, panelX, top, panelW, height, ui.Black)
+	ui.FrameRect(screen, panelX, top, panelW, height, 2, ui.Yellow)
+
+	y := float64(top + 8)
+	title := func(s string) {
+		ui.DrawText(screen, s, panelX+panelW/2, y, 14, ui.Yellow, ui.AlignCenter, ui.AlignStart)
+		y += 22
+	}
+	row := func(name, pays string, lit bool) {
+		ink := color.Color(ui.White)
+		if lit {
+			ui.FillRect(screen, panelX+3, y-2, panelW-6, 17, ui.White)
+			ink = ui.Black
+		}
+		ui.DrawText(screen, name, panelX+10, y, 12, ink, ui.AlignStart, ui.AlignStart)
+		ui.DrawText(screen, pays, panelX+panelW-10, y, 12, ink, ui.AlignEnd, ui.AlignStart)
+		y += 18
+	}
+
+	// The row for what the hand on the table made is lit.
+	settled := !g.m.Dealt && !g.revealing && len(g.m.Last.Outcomes) > 0
+	made := func(o table.Outcome) bool { return settled && g.m.Last.Outcomes[0] == o }
+
+	title("BLACKJACK")
+	row("BLACKJACK", "3 TO 2", made(table.WonBlackjack))
+	row("WIN", "1 TO 1", false)
+	row("PUSH", "BET BACK", false)
+	y += 8
+	ui.DrawText(screen, fmt.Sprintf("DEALER STANDS ON %d", table.DealerStands), panelX+10, y, 11, ui.LightGray, ui.AlignStart, ui.AlignStart)
+	y += 15
+	ui.DrawText(screen, fmt.Sprintf("DOUBLE ON HARD %d TO %d", table.DoubleFrom, table.DoubleTo), panelX+10, y, 11, ui.LightGray, ui.AlignStart, ui.AlignStart)
+	y += 15
+	ui.DrawText(screen, fmt.Sprintf("%d DECKS, SHUFFLED", table.Decks), panelX+10, y, 11, ui.LightGray, ui.AlignStart, ui.AlignStart)
+	y += 15
+	ui.DrawText(screen, "AT THE CUT CARD", panelX+10, y, 11, ui.LightGray, ui.AlignStart, ui.AlignStart)
+	y += 24
+
+	// Perfect Pairs pays for the hand on the table from the deal onwards.
+	paired := func(k table.PairKind) bool {
+		return len(g.m.Hands) > 0 && g.m.Side > 0 && g.m.Pair == k
+	}
+	title("PERFECT PAIRS")
+	for k := table.PerfectPair; k >= table.MixedPair; k-- {
+		name := strings.ToUpper(strings.TrimSuffix(k.String(), " Pair"))
+		row(name, fmt.Sprintf("%d TO 1", table.PairPays[k]), paired(k))
+	}
+	y += 8
+	for _, l := range []string{"PAID ON YOUR FIRST", "TWO CARDS, AT THE DEAL"} {
+		ui.DrawText(screen, l, panelX+10, y, 11, ui.LightGray, ui.AlignStart, ui.AlignStart)
+		y += 15
+	}
+}
+
+// drawStat draws a labelled number in one of four columns under the table.
+func drawStat(screen *ebiten.Image, label string, value, column int, c color.Color) {
+	x := tableX + (float64(column)+0.5)*tableW/4
+	ui.DrawText(screen, label, x, statY, 11, ui.LightGray, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, fmt.Sprint(value), x, statY+13, 24, c, ui.AlignCenter, ui.AlignStart)
+}
+
+// drawShoe draws the shoe at the end of the table: a box of cards that
+// empties from the front as they are dealt, with the cut card standing in
+// it where it was put. It shows how far through the shoe is, not a count.
+func (g *Game) drawShoe(screen *ebiten.Image) {
+	const (
+		w, h = 150, 26
+		x    = tableX + tableW - w
+		y    = dealerY + 6
+	)
+	ui.DrawText(screen, "SHOE", x+w/2, y-17, 11, ui.LightGray, ui.AlignCenter, ui.AlignStart)
+	ui.FillRect(screen, x, y, w, h, ui.Black)
+
+	// The cards are dealt from the left, so those left fill the right.
+	per := float64(w-4) / float64(table.ShoeSize)
+	left := float64(g.m.CardsLeft()) * per
+	ui.FillRect(screen, x+w-2-left, y+2, left, h-4, ui.LightGray)
+
+	// The cut card stands that many cards in from the front of what is
+	// left. Once it has come out it is gone from the shoe.
+	note, ink := "", color.Color(ui.LightGray)
+	switch {
+	case g.m.CutOut():
+		note, ink = "CUT CARD OUT: SHUFFLE NEXT", ui.Yellow
+	case g.m.Shuffled && len(g.m.Hands) > 0:
+		note = "NEW SHOE"
+	}
+	if !g.m.CutOut() {
+		cut := x + w - 2 - left + float64(g.m.ToCut)*per
+		ui.FillRect(screen, cut-1, y-3, 3, h+6, ui.Yellow)
+	}
+	ui.FrameRect(screen, x, y, w, h, 2, ui.Brown)
+	ui.DrawText(screen, note, x+w/2, y+h+6, 10, ink, ui.AlignCenter, ui.AlignStart)
+}
