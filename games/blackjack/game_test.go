@@ -221,3 +221,131 @@ func TestSaveAndResume(t *testing.T) {
 		t.Errorf("after the hand: %+v", last.m.Save())
 	}
 }
+
+// TestCutCard checks that the cut card is dealt onto the table when it
+// comes out of the shoe: at once if the player's card brought it out, and
+// in its turn if it came out among the dealer's cards.
+func TestCutCard(t *testing.T) {
+	// It comes out with a card the player takes.
+	g := testGame(false)
+	inPlay(t, g)
+	if g.cutShown {
+		t.Fatal("the cut card is on the table from the start of the shoe")
+	}
+	g.m.ToCut = 1
+	g.act(table.ActHit)
+	if !g.m.CutOut() {
+		t.Fatal("the cut card did not come out")
+	}
+	if g.m.Dealt && !g.cutShown {
+		t.Error("the cut card came out with the player's card but is not on the table")
+	}
+	shown(t, g)
+	if !g.cutShown {
+		t.Error("the cut card is not on the table once the hand is over")
+	}
+
+	// It comes out among the dealer's cards: not before they are dealt.
+	g = testGame(false)
+	inPlay(t, g)
+	g.m.ToCut = 1
+	g.act(table.ActStand)
+	if !g.m.CutOut() || !g.revealing {
+		t.Fatalf("after standing: cut card out %v, revealing %v", g.m.CutOut(), g.revealing)
+	}
+	if g.cutShown {
+		t.Error("the cut card is on the table before the dealer's card that brought it out")
+	}
+	// It is shown once the cards dealt before it are down, and not sooner.
+	for g.revealing {
+		before := g.dealerShown
+		g.ticks++
+		g.reveal()
+		if g.cutShown && before < 2 {
+			t.Fatalf("the cut card was shown with only %d of the dealer's cards down", before)
+		}
+	}
+	if !g.cutShown {
+		t.Error("the cut card was never shown")
+	}
+
+	// A game opened with the cut card already out has it on the table.
+	path := filepath.Join(t.TempDir(), "save.json")
+	g = New(bank.Open(path), testSounds())
+	inPlay(t, g)
+	// Deal the shoe down to the cut card, so the save is one play could
+	// have left.
+	for c := range g.m.Shoe {
+		for g.m.ToCut > 0 && g.m.Shoe[c] > 0 {
+			g.m.Shoe[c]--
+			g.m.ToCut--
+		}
+	}
+	g.save()
+	if again := New(bank.Open(path), testSounds()); !again.cutShown {
+		t.Error("reopened with the cut card out, but it is not on the table")
+	}
+}
+
+// TestShuffle checks that the shuffle is shown before the first hand from
+// a new shoe, and that the hand is dealt when it ends.
+func TestShuffle(t *testing.T) {
+	// out returns a game with the cut card out and the hand over.
+	out := func() *Game {
+		g := testGame(false)
+		inPlay(t, g)
+		g.m.ToCut = 1
+		g.act(table.ActStand)
+		shown(t, g)
+		return g
+	}
+
+	g := out()
+	left := g.m.CardsLeft()
+	g.pressDeal()
+	if !g.shuffling || g.m.Dealt || g.m.CardsLeft() != left {
+		t.Fatalf("after pressing deal: shuffling %v, dealt %v, %d cards left of %d", g.shuffling, g.m.Dealt, g.m.CardsLeft(), left)
+	}
+	for n := 0; g.shuffling; n++ {
+		if n > shuffleTicks+1 {
+			t.Fatal("the shuffle never ended")
+		}
+		g.ticks++
+		g.shuffleStep(false)
+	}
+	if g.ticks-g.shuffleStart != shuffleTicks {
+		t.Errorf("the shuffle took %d ticks, want %d", g.ticks-g.shuffleStart, shuffleTicks)
+	}
+	// The hand has been dealt from a new shoe, with the cut card back in it.
+	if !g.m.Dealt && !g.revealing {
+		t.Error("no hand was dealt after the shuffle")
+	}
+	if !g.m.Shuffled || g.m.CutOut() || g.cutShown || g.m.CardsLeft() < table.ShoeSize-10 {
+		t.Errorf("after the shuffle: new shoe %v, cut card out %v and on the table %v, %d cards left",
+			g.m.Shuffled, g.m.CutOut(), g.cutShown, g.m.CardsLeft())
+	}
+
+	// The shuffle can be cut short.
+	g = out()
+	g.pressDeal()
+	g.ticks++
+	g.shuffleStep(true)
+	if g.shuffling || !g.m.Shuffled {
+		t.Errorf("cut short: shuffling %v, new shoe %v", g.shuffling, g.m.Shuffled)
+	}
+
+	// With too few credits for the hand there is nothing to shuffle for.
+	g = out()
+	g.bank.Credits = 0
+	g.pressDeal()
+	if g.shuffling || g.m.Dealt || g.message != outOfCredits {
+		t.Errorf("with no credits: shuffling %v, dealt %v, message %q", g.shuffling, g.m.Dealt, g.message)
+	}
+
+	// With the cut card still in the shoe the hand is dealt straight away.
+	g = testGame(false)
+	g.pressDeal()
+	if g.shuffling || (!g.m.Dealt && !g.revealing) {
+		t.Errorf("from a shoe not cut: shuffling %v, dealt %v", g.shuffling, g.m.Dealt)
+	}
+}
