@@ -76,8 +76,8 @@ type Game struct {
 	snd   *ui.Sounds
 	bank  *bank.Bank
 
-	// The sounds that are this game's own.
-	cardSound, holdSound []byte
+	// The sound that is this game's own.
+	holdSound []byte
 
 	m        *poker.Machine
 	autoHold bool // the best cards are held as soon as a hand is dealt
@@ -110,7 +110,6 @@ type Game struct {
 // it last kept there.
 func New(b *bank.Bank, snd *ui.Sounds) *Game {
 	g := &Game{snd: snd, bank: b, autoHold: true}
-	g.cardSound = ui.Tone(165, 45, 0.3, true)
 	g.holdSound = ui.Tone(880, 30, 0.15, true)
 	g.m = poker.NewRandom(b)
 	g.message = "CHOOSE YOUR BET AND PRESS DEAL"
@@ -475,7 +474,7 @@ func (g *Game) turnCards() {
 	last := 0
 	for _, at := range g.turnAt {
 		if at == g.ticks {
-			g.snd.Play(g.cardSound)
+			g.snd.Play(g.snd.Card)
 		}
 		last = max(last, at)
 	}

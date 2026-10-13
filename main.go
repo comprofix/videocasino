@@ -13,6 +13,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 
 	"videocasino/bank"
+	"videocasino/games/blackjack"
 	"videocasino/games/slot"
 	"videocasino/games/videopoker"
 	"videocasino/ui"
@@ -46,7 +47,7 @@ const (
 var carpet = color.RGBA{96, 0, 0, 255}
 
 const (
-	rowsY = 180 // the first line of the menu
+	rowsY = 160 // the first line of the menu
 	rowH  = 40
 
 	creditsY = 372
@@ -71,6 +72,7 @@ var rowKeys = [][2]ebiten.Key{
 	{ebiten.KeyDigit1, ebiten.KeyNumpad1},
 	{ebiten.KeyDigit2, ebiten.KeyNumpad2},
 	{ebiten.KeyDigit3, ebiten.KeyNumpad3},
+	{ebiten.KeyDigit4, ebiten.KeyNumpad4},
 }
 
 type App struct {
@@ -102,6 +104,7 @@ func newApp() *App {
 	// given in here.
 	a.entries = []entry{
 		{title: "VIDEO POKER", game: videopoker.New(a.bank, a.snd)},
+		{title: "BLACKJACK", game: blackjack.New(a.bank, a.snd)},
 		{title: "SLOT MACHINE", game: slot.New(a.bank, a.snd)},
 	}
 	slices.SortFunc(a.entries, func(x, y entry) int { return strings.Compare(x.title, y.title) })
@@ -231,7 +234,7 @@ func (a *App) drawMenu(screen *ebiten.Image) {
 		row(i, e.title, ink)
 	}
 	row(len(a.entries), "EXIT", ui.White)
-	ui.DrawText(screen, "MAKE YOUR CHOICE", ui.ScreenW/2, 318, 24, ui.LightCyan, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "MAKE YOUR CHOICE", ui.ScreenW/2, rowsY+float64(len(a.entries)+1)*rowH+14, 24, ui.LightCyan, ui.AlignCenter, ui.AlignStart)
 
 	ui.DrawText(screen, "CREDITS", ui.ScreenW/2, creditsY, 11, ui.LightGray, ui.AlignCenter, ui.AlignStart)
 	ui.DrawText(screen, fmt.Sprint(a.bank.Credits), ui.ScreenW/2, creditsY+13, 32, ui.LightGreen, ui.AlignCenter, ui.AlignStart)
