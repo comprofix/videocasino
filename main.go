@@ -13,6 +13,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 
 	"videocasino/bank"
+	"videocasino/games/videopoker"
 	"videocasino/ui"
 )
 
@@ -99,7 +100,7 @@ func newApp() *App {
 	// The games are listed in alphabetical order, whatever order they are
 	// given in here.
 	a.entries = []entry{
-		{title: "VIDEO POKER"},
+		{title: "VIDEO POKER", game: videopoker.New(a.bank, a.snd)},
 		{title: "SLOT MACHINE"},
 	}
 	slices.SortFunc(a.entries, func(x, y entry) int { return strings.Compare(x.title, y.title) })
