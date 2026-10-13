@@ -1,0 +1,262 @@
+// Video Casino: several casino games in one program, played for pretend
+// credits from one balance.
+package main
+
+import (
+	"fmt"
+	"image/color"
+	"log"
+	"slices"
+	"strings"
+
+	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
+
+	"videocasino/bank"
+	"videocasino/ui"
+)
+
+// game is one of the games on the menu. It has the whole screen while it is
+// being played, and draws its own background and border.
+type game interface {
+	// Update plays one tick. It reports true when the player has asked to
+	// go back to the main menu.
+	Update() (leave bool)
+	Draw(screen *ebiten.Image)
+}
+
+// entry is a line on the menu. Its game is nil until the game has been
+// moved in, and the line is then shown dimmed.
+type entry struct {
+	title string
+	game  game
+}
+
+type scene int
+
+const (
+	sceneMenu scene = iota
+	sceneGame
+	sceneBye
+)
+
+// The menu's own colour: a deep red, under a gold border.
+var carpet = color.RGBA{96, 0, 0, 255}
+
+const (
+	rowsY = 180 // the first line of the menu
+	rowH  = 40
+
+	creditsY = 372
+	messageY = 440
+	buttonY  = 474
+	buttonH  = 40
+)
+
+// rowButton is the place of a line on the menu. Clicking a line chooses it.
+func rowButton(i int) ui.Button {
+	return ui.Button{X: ui.ScreenW/2 - 160, Y: rowsY + float64(i)*rowH - 5, W: 320, H: rowH - 4}
+}
+
+var (
+	coinButton  = ui.Button{X: 232, Y: buttonY, W: 240, H: buttonH}
+	resetButton = ui.Button{X: 478, Y: buttonY, W: 90, H: buttonH}
+)
+
+// The keys that choose each line, along the top of the keyboard and on the
+// number pad.
+var rowKeys = [][2]ebiten.Key{
+	{ebiten.KeyDigit1, ebiten.KeyNumpad1},
+	{ebiten.KeyDigit2, ebiten.KeyNumpad2},
+	{ebiten.KeyDigit3, ebiten.KeyNumpad3},
+}
+
+type App struct {
+	scene scene
+	snd   *ui.Sounds
+	bank  *bank.Bank
+
+	entries []entry
+	playing game // the game being played, while there is one
+
+	message    string
+	saveFailed bool
+
+	byeTicks int
+}
+
+func newApp() *App {
+	a := &App{snd: ui.NewSounds()}
+
+	// Pick up the saved bank, if there is one. A program with nowhere to
+	// save still plays; it just starts afresh each time.
+	a.bank = bank.New()
+	if path, err := bank.Path(); err == nil {
+		a.bank = bank.Open(path)
+	}
+	a.snd.On = a.bank.Sound
+
+	// The games are listed in alphabetical order, whatever order they are
+	// given in here.
+	a.entries = []entry{
+		{title: "VIDEO POKER"},
+		{title: "SLOT MACHINE"},
+	}
+	slices.SortFunc(a.entries, func(x, y entry) int { return strings.Compare(x.title, y.title) })
+	return a
+}
+
+// save keeps the bank as it stands. A failure is reported on screen once,
+// not on every change.
+func (a *App) save() {
+	if err := a.bank.Save(); err != nil && !a.saveFailed {
+		a.saveFailed = true
+		a.message = "COULD NOT SAVE THE GAME"
+	}
+}
+
+func (a *App) Update() error {
+	if ui.Pressed(ebiten.KeyS) {
+		a.bank.Sound = !a.bank.Sound
+		a.snd.On = a.bank.Sound
+		a.save()
+	}
+
+	switch a.scene {
+	case sceneMenu:
+		a.updateMenu()
+
+	case sceneGame:
+		if a.playing.Update() {
+			a.scene = sceneMenu
+			a.message = ""
+		}
+
+	case sceneBye:
+		a.byeTicks++
+		if a.byeTicks > 100 {
+			return ebiten.Termination
+		}
+	}
+	return nil
+}
+
+func (a *App) updateMenu() {
+	click := inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft)
+	x, y := ebiten.CursorPosition()
+	hit := func(b ui.Button) bool { return click && b.Hit(x, y) }
+
+	if ui.Pressed(ebiten.KeyC) || hit(coinButton) {
+		a.insertCoin()
+	}
+	if ui.Pressed(ebiten.KeyR) || hit(resetButton) {
+		a.reset()
+	}
+
+	for i := range a.entries {
+		if ui.Pressed(rowKeys[i][:]...) || hit(rowButton(i)) {
+			a.choose(i)
+		}
+	}
+	// The last line is the way out.
+	exit := len(a.entries)
+	if ui.Pressed(rowKeys[exit][:]...) || ui.Pressed(ebiten.KeyEscape) || hit(rowButton(exit)) {
+		a.scene = sceneBye
+		a.snd.Play(a.snd.Bye)
+	}
+}
+
+// choose starts the game on the given line of the menu.
+func (a *App) choose(i int) {
+	e := a.entries[i]
+	if e.game == nil {
+		a.message = e.title + " IS NOT HERE YET"
+		return
+	}
+	a.snd.Play(a.snd.Click)
+	a.playing = e.game
+	a.scene = sceneGame
+}
+
+// reset puts the credits back to the starting amount.
+func (a *App) reset() {
+	a.bank.Reset()
+	a.message = "CREDITS RESET"
+	a.snd.Play(a.snd.Click)
+	a.save()
+}
+
+// insertCoin adds credits, so play can go on after they run out.
+func (a *App) insertCoin() {
+	a.bank.InsertCoin()
+	a.message = fmt.Sprintf("COIN INSERTED - %d CREDITS ADDED", bank.CoinCredits)
+	a.snd.Play(a.snd.Coin)
+	a.save()
+}
+
+func (a *App) Layout(outsideWidth, outsideHeight int) (int, int) {
+	return ui.ScreenW, ui.ScreenH
+}
+
+func (a *App) Draw(screen *ebiten.Image) {
+	if a.scene == sceneGame {
+		a.playing.Draw(screen)
+		return
+	}
+
+	screen.Fill(carpet)
+	ui.DrawBorder(screen, ui.Gold)
+	if a.scene == sceneBye {
+		ui.DrawText(screen, "Thanks for playing", ui.ScreenW/2, ui.ScreenH/2, 44, ui.Yellow, ui.AlignCenter, ui.AlignCenter)
+		return
+	}
+	a.drawMenu(screen)
+}
+
+func (a *App) drawMenu(screen *ebiten.Image) {
+	ui.DrawText(screen, "VIDEO CASINO", ui.ScreenW/2, 70, 48, ui.Yellow, ui.AlignCenter, ui.AlignStart)
+
+	row := func(i int, title string, ink color.Color) {
+		y := rowsY + float64(i)*rowH
+		ui.DrawText(screen, fmt.Sprintf("%d.", i+1), ui.ScreenW/2-130, y, 24, ink, ui.AlignStart, ui.AlignStart)
+		ui.DrawText(screen, title, ui.ScreenW/2-90, y, 24, ink, ui.AlignStart, ui.AlignStart)
+	}
+	for i, e := range a.entries {
+		ink := color.Color(ui.White)
+		if e.game == nil {
+			ink = ui.DarkGray
+		}
+		row(i, e.title, ink)
+	}
+	row(len(a.entries), "EXIT", ui.White)
+	ui.DrawText(screen, "MAKE YOUR CHOICE", ui.ScreenW/2, 318, 24, ui.LightCyan, ui.AlignCenter, ui.AlignStart)
+
+	ui.DrawText(screen, "CREDITS", ui.ScreenW/2, creditsY, 11, ui.LightGray, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, fmt.Sprint(a.bank.Credits), ui.ScreenW/2, creditsY+13, 32, ui.LightGreen, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, a.message, ui.ScreenW/2, messageY, 16, ui.Yellow, ui.AlignCenter, ui.AlignStart)
+
+	coin := fmt.Sprintf("INSERT COIN +$%d", bank.CoinCredits/100)
+	ui.DrawCoinButton(screen, coinButton, 14, coin)
+	ui.DrawResetButton(screen, resetButton, 13)
+
+	sound := "ON"
+	if !a.snd.On {
+		sound = "OFF"
+	}
+	hint := fmt.Sprintf("1-%d choose    C coin    R reset    S sound %s    ESC exit", len(a.entries)+1, sound)
+	ui.DrawText(screen, hint, ui.ScreenW/2, 550, 11, ui.LightGray, ui.AlignCenter, ui.AlignStart)
+}
+
+func main() {
+	// Use a bigger window where the monitor has room for it.
+	scale := 1.0
+	if _, h := ebiten.Monitor().Size(); h >= 1000 {
+		scale = 1.5
+	}
+	ebiten.SetWindowSize(int(ui.ScreenW*scale), int(ui.ScreenH*scale))
+	ebiten.SetWindowTitle("Video Casino")
+	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
+	if err := ebiten.RunGame(newApp()); err != nil {
+		log.Fatal(err)
+	}
+}

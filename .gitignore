@@ -1,0 +1,11 @@
+# Built binaries
+/videocasino.exe
+/videocasino
+
+# The saved game, kept beside the program
+/save.json
+/save.json.tmp
+
+# Local notes
+/CLAUDE.md
+/PLAN.md
