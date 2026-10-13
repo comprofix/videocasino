@@ -71,6 +71,25 @@ func DrawCardBack(dst *ebiten.Image, x, y, scale float64) {
 	}
 }
 
+// cardBack is a card lying face down, drawn once so that it can be drawn
+// again turned.
+var cardBack *ebiten.Image
+
+// DrawCardBackTurned draws a card lying face down with its centre at
+// (cx, cy), turned by angle radians.
+func DrawCardBackTurned(dst *ebiten.Image, cx, cy, scale, angle float64) {
+	if cardBack == nil {
+		cardBack = ebiten.NewImage(CardW, CardH)
+		DrawCardBack(cardBack, 0, 0, 1)
+	}
+	op := &ebiten.DrawImageOptions{Filter: ebiten.FilterLinear}
+	op.GeoM.Translate(-CardW/2, -CardH/2)
+	op.GeoM.Scale(scale, scale)
+	op.GeoM.Rotate(angle)
+	op.GeoM.Translate(cx, cy)
+	dst.DrawImage(cardBack, op)
+}
+
 // DrawSuit draws a suit's symbol centred on (cx, cy). It reaches h above and
 // below the centre.
 func DrawSuit(dst *ebiten.Image, suit cards.Suit, cx, cy, h float64, c color.Color) {

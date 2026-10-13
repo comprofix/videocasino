@@ -89,6 +89,20 @@ type Game struct {
 	hint    table.Action
 	hinting bool // the hint is on show
 
+	// The cut card is dealt onto the table when it comes out of the shoe,
+	// and lies there until the shoe is shuffled. If it came out among the
+	// dealer's cards it is shown in its turn: when cutAt of them are down.
+	cutShown bool
+	cutAt    int
+
+	// The shuffle is shown before the first hand from a new shoe is dealt.
+	shuffling    bool
+	shuffleStart int // the tick it began at
+	shuffleFrom  int // the cards that were left in the shoe
+
+	// The sounds that are this game's own.
+	cutSound, riffleSound []byte
+
 	credits int // credits on display; a win is added once the dealer has played
 	win     int
 	message string
@@ -103,11 +117,16 @@ func New(b *bank.Bank, snd *ui.Sounds) *Game {
 	g.m = table.NewRandom(b)
 	g.message = "CHOOSE YOUR BET AND PRESS DEAL"
 
+	g.cutSound = append(ui.Tone(880, 60, 0.2, true), ui.Tone(660, 110, 0.2, true)...)
+	g.riffleSound = ui.Tone(165, 28, 0.12, true)
+
 	var s table.Saved
 	if b.Load(saveName, &s) {
 		g.m.Restore(s)
 		g.resume()
 	}
+	// A cut card that came out before the game was closed is on the table.
+	g.cutShown = g.m.CutOut()
 	g.credits = b.Credits
 
 	go func() {
@@ -189,6 +208,13 @@ func (g *Game) updatePlay() {
 		g.reveal()
 		return
 	}
+	if g.shuffling {
+		// The deal key or a click cuts the shuffle short.
+		skip := ui.Pressed(ebiten.KeySpace, ebiten.KeyEnter, ebiten.KeyNumpadEnter) ||
+			inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft)
+		g.shuffleStep(skip)
+		return
+	}
 	// The bank may have changed while the game was not being played.
 	g.credits = g.bank.Credits
 	if ui.Pressed(ebiten.KeyEscape) {
@@ -242,8 +268,55 @@ func (g *Game) updatePlay() {
 	case ui.Pressed(ebiten.KeyArrowLeft):
 		g.setSideBet(ui.Step(table.SideChoices, g.m.SideBet, -1))
 	case ui.Pressed(ebiten.KeySpace, ebiten.KeyEnter, ebiten.KeyNumpadEnter) || hit(dealButton):
-		g.deal()
+		g.pressDeal()
 	}
+}
+
+// How the shuffle goes: so many riffles, each of so many ticks, with a card
+// falling every few ticks while the two halves run together.
+const (
+	riffles      = 4
+	riffleTicks  = 40
+	shuffleTicks = riffles * riffleTicks
+	riffleCards  = 8   // cards that fall in a riffle, from each half in turn
+	riffleFall   = 0.6 // the part of a riffle the cards fall for
+)
+
+// pressDeal deals the next hand. If the cut card has come out the shoe is
+// shuffled first, and that is shown before the cards are dealt. With too
+// few credits for the hand there is no shuffle to show: nothing is dealt.
+func (g *Game) pressDeal() {
+	if !g.m.CutOut() || g.bank.Credits < g.m.Bet+g.m.SideBet {
+		g.deal()
+		return
+	}
+	g.clearWin()
+	g.message = "SHUFFLING THE SHOE"
+	g.shuffling = true
+	g.shuffleStart = g.ticks
+	g.shuffleFrom = g.m.CardsLeft()
+}
+
+// shuffleStep carries the shuffle on by a tick, and deals the hand when it
+// is over or has been cut short.
+func (g *Game) shuffleStep(skip bool) {
+	t := g.ticks - g.shuffleStart
+	if skip || t >= shuffleTicks {
+		g.shuffling = false
+		g.deal()
+		return
+	}
+	// A card falls at even steps through the first part of each riffle.
+	fall := int(riffleTicks * riffleFall)
+	if at := t % riffleTicks; at < fall && at%(fall/riffleCards) == 0 {
+		g.snd.Play(g.riffleSound)
+	}
+}
+
+// showCut deals the cut card onto the table.
+func (g *Game) showCut() {
+	g.cutShown = true
+	g.snd.Play(g.cutSound)
 }
 
 // clearWin takes the last hand's win off the display. The cards stay.
@@ -303,6 +376,9 @@ func (g *Game) deal() {
 	g.hinting = false
 	g.win = g.m.SideWin
 	g.dealerShown = 1
+	if !g.m.CutOut() {
+		g.cutShown = false // shuffled back into the shoe
+	}
 	g.snd.Play(g.snd.Card)
 	if g.m.SideWin > 0 {
 		g.snd.Play(g.snd.Win)
@@ -371,7 +447,12 @@ func (g *Game) act(a table.Action) {
 // after catches up with the machine once a card has been dealt: there is
 // either more of the hand to play, or the dealer's cards to show.
 func (g *Game) after() {
+	cutDue := g.m.CutOut() && !g.cutShown
 	if g.m.Dealt {
+		// The cut card came out with the card just dealt.
+		if cutDue {
+			g.showCut()
+		}
 		g.credits = g.bank.Credits
 		g.message = g.pairNote() + g.prompt()
 		return
@@ -380,12 +461,25 @@ func (g *Game) after() {
 	g.message = ""
 	g.revealing = true
 	g.revealAt = g.ticks + revealTicks
+	if cutDue {
+		// The cards dealt since the cut card came out are the last of the
+		// dealer's, so it is shown before them: at once if it came out
+		// before any that are still to be shown.
+		after := -g.m.ToCut
+		g.cutAt = max(len(g.m.Dealer)-after, g.dealerShown)
+	}
 }
 
 // reveal carries on showing the dealer's cards, and when the last one is
 // down says how the hand went.
 func (g *Game) reveal() {
 	if g.ticks < g.revealAt {
+		return
+	}
+	// The cut card takes its turn among the dealer's cards.
+	if g.m.CutOut() && !g.cutShown && g.dealerShown >= g.cutAt {
+		g.showCut()
+		g.revealAt = g.ticks + revealTicks
 		return
 	}
 	if g.dealerShown < len(g.m.Dealer) {
@@ -615,65 +709,12 @@ func (g *Game) drawPlay(screen *ebiten.Image) {
 	g.drawPanel(screen)
 	const centre = tableX + tableW/2
 
-	// The dealer's hand. Until the first deal the cards lie face down.
-	//
-	// While only one of the dealer's cards is on show a second lies face
-	// down beside it, as at a table where the dealer is dealt two. It is
-	// there for the look: no card has been drawn for it, so there is
-	// nothing hidden to be learnt. The card that takes its place is drawn
-	// when the dealer plays.
-	dealer := g.m.Dealer[:min(g.dealerShown, len(g.m.Dealer))]
-	label := "DEALER"
-	switch len(dealer) {
-	case 0:
-		drawCards(screen, nil, 2, centre, dealerY, dealerW)
-	case 1:
-		label = "DEALER: " + totalText(dealer)
-		drawCards(screen, dealer, 1, centre, dealerY, dealerW)
-	default:
-		label = "DEALER: " + totalText(dealer)
-		drawCards(screen, dealer, 0, centre, dealerY, dealerW)
+	// While the shoe is being shuffled the table is clear.
+	if g.shuffling {
+		g.drawShuffle(screen)
+	} else {
+		g.drawHands(screen)
 	}
-	ui.DrawText(screen, label, centre, dealerY-17, 13, ui.White, ui.AlignCenter, ui.AlignStart)
-
-	// The player's hand, or the two it was split into.
-	if len(g.m.Hands) == 0 {
-		drawCards(screen, nil, 2, centre, playerY, tableW-60)
-		ui.DrawText(screen, "YOUR HAND", centre, playerY-17, 13, ui.White, ui.AlignCenter, ui.AlignStart)
-	}
-	for i := range g.m.Hands {
-		h := &g.m.Hands[i]
-		cx, width, name := float64(centre), float64(tableW-60), "YOUR HAND"
-		if len(g.m.Hands) == 2 {
-			cx = tableX + tableW/4 + float64(i)*tableW/2
-			width = tableW/2 - 30
-			name = fmt.Sprintf("HAND %d", i+1)
-		}
-		ink := color.Color(ui.White)
-		if g.m.Dealt && i == g.m.Active {
-			ink = ui.Yellow
-		}
-		label := fmt.Sprintf("%s: %s    BET %d", name, totalText(h.Cards), h.Bet)
-		ui.DrawText(screen, label, cx, playerY-17, 13, ink, ui.AlignCenter, ui.AlignStart)
-		drawCards(screen, h.Cards, 0, cx, playerY, width)
-
-		// Once the dealer has played, each hand is marked with how it went.
-		if !g.m.Dealt && !g.revealing && i < len(g.m.Last.Outcomes) {
-			tag, fill := "LOST", color.Color(ui.Red)
-			switch g.m.Last.Outcomes[i] {
-			case table.Won:
-				tag, fill = "WON", ui.Green
-			case table.WonBlackjack:
-				tag, fill = "BLACKJACK", ui.Green
-			case table.Pushed:
-				tag, fill = "PUSH", ui.Blue
-			}
-			const tagW, tagH = 96, 20
-			ui.FillRect(screen, cx-tagW/2, playerY+cardH-tagH-6, tagW, tagH, fill)
-			ui.DrawText(screen, tag, cx, playerY+cardH-tagH/2-6, 13, ui.White, ui.AlignCenter, ui.AlignCenter)
-		}
-	}
-
 	g.drawShoe(screen)
 
 	ui.DrawText(screen, g.message, centre, messageY, 15, ui.Yellow, ui.AlignCenter, ui.AlignStart)
@@ -691,7 +732,7 @@ func (g *Game) drawPlay(screen *ebiten.Image) {
 
 	// The hand's buttons work only while there is a hand to play, and the
 	// bets only between hands.
-	playing := g.m.Dealt && !g.revealing
+	playing := g.m.Dealt && !g.revealing && !g.shuffling
 	for i, a := range actions {
 		locked := !playing
 		switch a {
@@ -705,7 +746,7 @@ func (g *Game) drawPlay(screen *ebiten.Image) {
 	}
 	ui.DrawButton(screen, hintButton, false, !playing, 13, "HINT")
 
-	locked := g.m.Dealt || g.revealing
+	locked := g.m.Dealt || g.revealing || g.shuffling
 	for i, n := range table.BetChoices {
 		ui.DrawButton(screen, betButton(i), n == g.m.Bet, locked, 13, fmt.Sprintf("BET %d", n))
 	}
@@ -813,23 +854,167 @@ func (g *Game) drawShoe(screen *ebiten.Image) {
 	ui.FillRect(screen, x, y, w, h, ui.Black)
 
 	// The cards are dealt from the left, so those left fill the right.
+	// During a shuffle the shoe fills up again.
+	cardsLeft := float64(g.m.CardsLeft())
+	if g.shuffling {
+		done := float64(g.ticks-g.shuffleStart) / shuffleTicks
+		cardsLeft = float64(g.shuffleFrom) + (table.ShoeSize-float64(g.shuffleFrom))*done
+	}
 	per := float64(w-4) / float64(table.ShoeSize)
-	left := float64(g.m.CardsLeft()) * per
+	left := cardsLeft * per
 	ui.FillRect(screen, x+w-2-left, y+2, left, h-4, ui.LightGray)
 
 	// The cut card stands that many cards in from the front of what is
 	// left. Once it has come out it is gone from the shoe.
 	note, ink := "", color.Color(ui.LightGray)
 	switch {
+	case g.shuffling:
+		note, ink = "SHUFFLING", ui.Yellow
 	case g.m.CutOut():
 		note, ink = "CUT CARD OUT: SHUFFLE NEXT", ui.Yellow
 	case g.m.Shuffled && len(g.m.Hands) > 0:
 		note = "NEW SHOE"
 	}
-	if !g.m.CutOut() {
+	if !g.m.CutOut() && !g.shuffling {
 		cut := x + w - 2 - left + float64(g.m.ToCut)*per
 		ui.FillRect(screen, cut-1, y-3, 3, h+6, ui.Yellow)
 	}
 	ui.FrameRect(screen, x, y, w, h, 2, ui.Brown)
 	ui.DrawText(screen, note, x+w/2, y+h+6, 10, ink, ui.AlignCenter, ui.AlignStart)
+
+	// The cut card itself, once it has come out: a plain yellow card dealt
+	// onto the table beside the shoe, where it lies until the shuffle.
+	if g.cutShown && !g.shuffling {
+		const cw, ch = ui.CardW * cutScale, ui.CardH * cutScale
+		cx, cy := float64(x+w/2-cw/2), float64(y+h+22)
+		ui.FillRoundRect(screen, cx, cy, cw, ch, 10*cutScale, ui.DarkGray)
+		ui.FillRoundRect(screen, cx+1.5, cy+1.5, cw-3, ch-3, 9*cutScale, ui.Yellow)
+		ui.DrawText(screen, "CUT", cx+cw/2, cy+ch/2, 15, ui.Black, ui.AlignCenter, ui.AlignCenter)
+	}
+}
+
+// drawHands draws the dealer's hand and the player's.
+func (g *Game) drawHands(screen *ebiten.Image) {
+	const centre = tableX + tableW/2
+
+	// The dealer's hand. Until the first deal the cards lie face down.
+	//
+	// While only one of the dealer's cards is on show a second lies face
+	// down beside it, as at a table where the dealer is dealt two. It is
+	// there for the look: no card has been drawn for it, so there is
+	// nothing hidden to be learnt. The card that takes its place is drawn
+	// when the dealer plays.
+	dealer := g.m.Dealer[:min(g.dealerShown, len(g.m.Dealer))]
+	label := "DEALER"
+	switch len(dealer) {
+	case 0:
+		drawCards(screen, nil, 2, centre, dealerY, dealerW)
+	case 1:
+		label = "DEALER: " + totalText(dealer)
+		drawCards(screen, dealer, 1, centre, dealerY, dealerW)
+	default:
+		label = "DEALER: " + totalText(dealer)
+		drawCards(screen, dealer, 0, centre, dealerY, dealerW)
+	}
+	ui.DrawText(screen, label, centre, dealerY-17, 13, ui.White, ui.AlignCenter, ui.AlignStart)
+
+	// The player's hand, or the two it was split into.
+	if len(g.m.Hands) == 0 {
+		drawCards(screen, nil, 2, centre, playerY, tableW-60)
+		ui.DrawText(screen, "YOUR HAND", centre, playerY-17, 13, ui.White, ui.AlignCenter, ui.AlignStart)
+	}
+	for i := range g.m.Hands {
+		h := &g.m.Hands[i]
+		cx, width, name := float64(centre), float64(tableW-60), "YOUR HAND"
+		if len(g.m.Hands) == 2 {
+			cx = tableX + tableW/4 + float64(i)*tableW/2
+			width = tableW/2 - 30
+			name = fmt.Sprintf("HAND %d", i+1)
+		}
+		ink := color.Color(ui.White)
+		if g.m.Dealt && i == g.m.Active {
+			ink = ui.Yellow
+		}
+		label := fmt.Sprintf("%s: %s    BET %d", name, totalText(h.Cards), h.Bet)
+		ui.DrawText(screen, label, cx, playerY-17, 13, ink, ui.AlignCenter, ui.AlignStart)
+		drawCards(screen, h.Cards, 0, cx, playerY, width)
+
+		// Once the dealer has played, each hand is marked with how it went.
+		if !g.m.Dealt && !g.revealing && i < len(g.m.Last.Outcomes) {
+			tag, fill := "LOST", color.Color(ui.Red)
+			switch g.m.Last.Outcomes[i] {
+			case table.Won:
+				tag, fill = "WON", ui.Green
+			case table.WonBlackjack:
+				tag, fill = "BLACKJACK", ui.Green
+			case table.Pushed:
+				tag, fill = "PUSH", ui.Blue
+			}
+			const tagW, tagH = 96, 20
+			ui.FillRect(screen, cx-tagW/2, playerY+cardH-tagH-6, tagW, tagH, fill)
+			ui.DrawText(screen, tag, cx, playerY+cardH-tagH/2-6, 13, ui.White, ui.AlignCenter, ui.AlignCenter)
+		}
+	}
+}
+
+// cutScale is the size of the cut card: a little smaller than the cards in
+// the hands, as it is not one of them.
+const cutScale = 0.5
+
+// drawShuffle draws the shoe being shuffled in the middle of the table: a
+// riffle, done several times over. The cards lie in two halves, and fall
+// from each in turn onto a pile between them, turning as they go. The pile
+// is then cut in two again for the next riffle.
+func (g *Game) drawShuffle(screen *ebiten.Image) {
+	const (
+		centreX = tableX + tableW/2
+		centreY = (dealerY + playerY + cardH) / 2
+		apart   = 120 // how far each half lies from the middle
+		lift    = 26  // how high a card rises as it falls across
+		turn    = 0.7 // how far a card is turned as it leaves its half
+	)
+	t := g.ticks - g.shuffleStart
+	riffle := min(t/riffleTicks, riffles-1)
+	at := float64(t-riffle*riffleTicks) / riffleTicks // how far through this riffle
+
+	// pile draws a few cards lying squared up, with their middle at x.
+	pile := func(x float64, n int) {
+		for i := range n {
+			ui.DrawCardBackTurned(screen, x-float64(i), centreY-float64(i), cardScale, 0)
+		}
+	}
+
+	// After the cards have fallen the pile is cut and the halves drawn
+	// apart, ready for the next riffle. The last riffle leaves it whole.
+	if at >= riffleFall {
+		out := 0.0
+		if riffle < riffles-1 {
+			out = (at - riffleFall) / (1 - riffleFall) * apart
+		}
+		pile(centreX-out, 3)
+		pile(centreX+out, 3)
+		return
+	}
+
+	// The halves, the pile between them, and the cards on their way: each
+	// sets off a little after the one before, from each half in turn.
+	pile(centreX-apart, 3)
+	pile(centreX+apart, 3)
+	const span = 0.25 // the part of the fall one card takes
+	for i := range riffleCards {
+		start := float64(i) * (riffleFall - riffleFall*span) / (riffleCards - 1)
+		u := (at - start) / (riffleFall * span)
+		if u <= 0 {
+			continue // still in its half
+		}
+		side := float64(1 - 2*(i%2)) // from the right, then the left
+		if u >= 1 {
+			// Landed: it lies on the pile, a little off square.
+			ui.DrawCardBackTurned(screen, centreX, centreY-float64(i), cardScale, side*0.04)
+			continue
+		}
+		x := centreX + side*apart*(1-u)
+		y := centreY - float64(i) - lift*4*u*(1-u)
+		ui.DrawCardBackTurned(screen, x, y, cardScale, side*turn*(1-u))
+	}
 }
