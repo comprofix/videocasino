@@ -89,7 +89,7 @@ func TestDealAndPlay(t *testing.T) {
 	if g.showing || g.playerShown != table.HandSize || g.dealerShown != 0 || g.over {
 		t.Fatalf("after the deal: showing %v, %d of the player's and %d of the dealer's cards up", g.showing, g.playerShown, g.dealerShown)
 	}
-	if g.m.PairPaid != 200 || g.win != 200 || g.credits != had || !strings.Contains(g.message, "PAIR PLUS PAYS 200") {
+	if g.m.PairPaid != 200 || g.win != 200 || g.credits != had || !strings.Contains(g.message, "PAIR PLUS PAYS $2 ") {
 		t.Errorf("Pair Plus paid %d, win %d on show, %d credits on show of %d: %q", g.m.PairPaid, g.win, g.credits, had, g.message)
 	}
 	// While the hand waits nothing can be bet.
@@ -266,7 +266,7 @@ func TestDealWithoutCredits(t *testing.T) {
 func TestSaveAndResume(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "save.json")
 	g := New(bank.Open(path), testSounds())
-	g.setChip(50)
+	g.setChip(100)
 	bet(g, table.Ante)
 	bet(g, table.PairPlus)
 	g.deal()
@@ -292,7 +292,7 @@ func TestSaveAndResume(t *testing.T) {
 	had := again.bank.Credits
 	again.play()
 	settle(t, again)
-	if !again.over || again.bank.Credits != had-50+again.result.Paid {
+	if !again.over || again.bank.Credits != had-100+again.result.Paid {
 		t.Errorf("the hand played out: over %v, credits from %d to %d on %d paid", again.over, had, again.bank.Credits, again.result.Paid)
 	}
 }

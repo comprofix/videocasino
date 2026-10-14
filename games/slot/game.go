@@ -666,6 +666,9 @@ func (g *Game) drawPlay(screen *ebiten.Image) {
 	g.drawPaytable(screen, win)
 
 	drawStat(screen, "CREDITS", g.credits, 0, ui.LightGreen)
+	// A credit is a cent: the balance in dollars goes under it.
+	cx, _ := cellCentre(0, 0)
+	ui.DrawText(screen, bank.Dollars(g.credits), cx, 413, 11, ui.LightGray, ui.AlignCenter, ui.AlignStart)
 	drawStat(screen, "BET / LINE", g.m.BetPerLine, 1, ui.White)
 	drawStat(screen, "LINES", g.m.Lines, 2, ui.White)
 	if inFree {

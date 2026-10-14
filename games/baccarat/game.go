@@ -301,7 +301,7 @@ func (g *Game) place() {
 		case g.bank.Credits == 0:
 			g.message = outOfCredits
 		case g.m.Bets[g.mark]+g.m.Chip > table.MaxBet:
-			g.message = fmt.Sprintf("NO MORE THAN %d ON ONE BET", table.MaxBet)
+			g.message = fmt.Sprintf("NO MORE THAN %s ON ONE BET", bank.Money(table.MaxBet))
 		default:
 			g.message = "NOT ENOUGH CREDITS FOR THAT CHIP"
 		}
@@ -363,7 +363,7 @@ func (g *Game) reset() {
 func (g *Game) insertCoin() {
 	g.bank.InsertCoin()
 	g.credits = g.bank.Credits
-	g.message = fmt.Sprintf("COIN INSERTED - %d CREDITS ADDED", bank.CoinCredits)
+	g.message = fmt.Sprintf("COIN INSERTED - %s ADDED", bank.Money(bank.CoinCredits))
 	g.snd.Play(g.snd.Coin)
 	g.save()
 }
@@ -541,10 +541,10 @@ func (g *Game) land() {
 	case won == 0:
 		g.message = what + " - NO WIN"
 	case g.win >= 5*r.Bet:
-		g.message = fmt.Sprintf("%s - YOU WIN %d", what, g.win)
+		g.message = fmt.Sprintf("%s - YOU WIN %s", what, bank.Money(g.win))
 		g.snd.Play(g.snd.BigWin)
 	default:
-		g.message = fmt.Sprintf("%s - YOU WIN %d", what, g.win)
+		g.message = fmt.Sprintf("%s - YOU WIN %s", what, bank.Money(g.win))
 		g.snd.Play(g.snd.Win)
 	}
 }
@@ -688,18 +688,18 @@ func (g *Game) drawPlay(screen *ebiten.Image) {
 	if g.revealing {
 		bet = g.result.Bet
 	}
-	stat := func(i int, label string, v int, c color.Color) {
+	stat := func(i int, label, v string, c color.Color) {
 		x := 150 + float64(i)*250
 		ui.DrawText(screen, label, x, statY, 11, ui.LightGray, ui.AlignCenter, ui.AlignStart)
-		ui.DrawText(screen, fmt.Sprint(v), x, statY+13, 22, c, ui.AlignCenter, ui.AlignStart)
+		ui.DrawText(screen, v, x, statY+13, 22, c, ui.AlignCenter, ui.AlignStart)
 	}
-	stat(0, "CREDITS", g.credits, ui.LightGreen)
-	stat(1, "TOTAL BET", bet, ui.Yellow)
-	stat(2, "WIN", g.win, ui.White)
+	stat(0, "CREDITS", bank.Dollars(g.credits), ui.LightGreen)
+	stat(1, "TOTAL BET", bank.Money(bet), ui.Yellow)
+	stat(2, "WIN", bank.Money(g.win), ui.White)
 
 	busy := g.revealing || g.shuffling
 	for i, n := range table.ChipChoices {
-		ui.DrawButton(screen, chipButton(i), n == g.m.Chip, busy, 11, fmt.Sprint(n), "CHIP")
+		ui.DrawButton(screen, chipButton(i), n == g.m.Chip, busy, 11, bank.Money(n), "CHIP")
 	}
 	ui.DrawButton(screen, clearButton, false, busy, 13, "CLEAR")
 	ui.DrawButton(screen, rebetButton, false, busy || g.m.LastTotal() == 0, 13, "REBET")

@@ -322,7 +322,7 @@ func (g *Game) place() {
 		case g.bank.Credits == 0:
 			g.message = outOfCredits
 		case g.m.Bets[g.mark]+g.m.Chip > table.MaxBet:
-			g.message = fmt.Sprintf("NO MORE THAN %d ON ONE BET", table.MaxBet)
+			g.message = fmt.Sprintf("NO MORE THAN %s ON ONE BET", bank.Money(table.MaxBet))
 		default:
 			g.message = "NOT ENOUGH CREDITS - THE BANK MUST COVER THE PLAY BET TOO"
 		}
@@ -389,7 +389,7 @@ func (g *Game) reset() {
 func (g *Game) insertCoin() {
 	g.bank.InsertCoin()
 	g.credits = g.bank.Credits
-	g.message = fmt.Sprintf("COIN INSERTED - %d CREDITS ADDED", bank.CoinCredits)
+	g.message = fmt.Sprintf("COIN INSERTED - %s ADDED", bank.Money(bank.CoinCredits))
 	g.snd.Play(g.snd.Coin)
 	g.save()
 }
@@ -505,7 +505,7 @@ func (g *Game) show(skip bool) {
 		g.win = g.m.PairPaid
 		what := g.m.Hand.Score().String()
 		if g.win > 0 {
-			g.message = fmt.Sprintf("%s - PAIR PLUS PAYS %d - PLAY OR FOLD", what, g.win)
+			g.message = fmt.Sprintf("%s - PAIR PLUS PAYS %s - PLAY OR FOLD", what, bank.Money(g.win))
 			g.snd.Play(g.snd.Win)
 		} else {
 			g.message = what + " - PLAY OR FOLD"
@@ -524,15 +524,15 @@ func (g *Game) land() {
 	dealer := r.Dealer.Score().String()
 	switch r.Outcome {
 	case table.NotQualified:
-		g.message = fmt.Sprintf("DEALER HAS %s AND DOES NOT QUALIFY - YOU WIN %d", dealer, r.Paid)
+		g.message = fmt.Sprintf("DEALER HAS %s AND DOES NOT QUALIFY - YOU WIN %s", dealer, bank.Money(r.Paid))
 	case table.Won:
-		g.message = fmt.Sprintf("YOU BEAT THE DEALER'S %s - YOU WIN %d", dealer, r.Paid)
+		g.message = fmt.Sprintf("YOU BEAT THE DEALER'S %s - YOU WIN %s", dealer, bank.Money(r.Paid))
 	case table.Pushed:
 		g.message = "THE HANDS TIE - YOUR BETS ARE HANDED BACK"
 	default:
 		g.message = "DEALER WINS WITH " + dealer
 		if r.Paid > 0 {
-			g.message += fmt.Sprintf(" - THE ANTE BONUS PAYS %d", r.Paid)
+			g.message += " - THE ANTE BONUS PAYS " + bank.Money(r.Paid)
 		}
 	}
 	switch {
@@ -710,7 +710,7 @@ func (g *Game) drawPlay(screen *ebiten.Image) {
 	betting := !g.m.Dealt && !g.showing
 	deciding := g.m.Dealt && !g.showing
 	for i, n := range table.ChipChoices {
-		ui.DrawButton(screen, chipButton(i), n == g.m.Chip, !betting, 11, fmt.Sprint(n), "CHIP")
+		ui.DrawButton(screen, chipButton(i), n == g.m.Chip, !betting, 11, bank.Money(n), "CHIP")
 	}
 	ui.DrawButton(screen, clearButton, false, !betting, 13, "CLEAR")
 	ui.DrawButton(screen, rebetButton, false, !betting || g.m.LastTotal() == 0, 13, "REBET")
@@ -828,12 +828,12 @@ func (g *Game) drawPanel(screen *ebiten.Image, made int) {
 	case g.showing:
 		bet = g.result.Staked()
 	}
-	stat := func(i int, label string, v int, c color.Color) {
+	stat := func(i int, label, v string, c color.Color) {
 		sy := 254 + float64(i)*50
 		ui.DrawText(screen, label, panelX+panelW/2, sy, 11, ui.LightGray, ui.AlignCenter, ui.AlignStart)
-		ui.DrawText(screen, fmt.Sprint(v), panelX+panelW/2, sy+13, 22, c, ui.AlignCenter, ui.AlignStart)
+		ui.DrawText(screen, v, panelX+panelW/2, sy+13, 22, c, ui.AlignCenter, ui.AlignStart)
 	}
-	stat(0, "CREDITS", g.credits, ui.LightGreen)
-	stat(1, "TOTAL BET", bet, ui.Yellow)
-	stat(2, "WIN", g.win, ui.White)
+	stat(0, "CREDITS", bank.Dollars(g.credits), ui.LightGreen)
+	stat(1, "TOTAL BET", bank.Money(bet), ui.Yellow)
+	stat(2, "WIN", bank.Money(g.win), ui.White)
 }

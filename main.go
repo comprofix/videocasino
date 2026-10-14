@@ -195,7 +195,7 @@ func (a *App) reset() {
 // insertCoin adds credits, so play can go on after they run out.
 func (a *App) insertCoin() {
 	a.bank.InsertCoin()
-	a.message = fmt.Sprintf("COIN INSERTED - %d CREDITS ADDED", bank.CoinCredits)
+	a.message = fmt.Sprintf("COIN INSERTED - %s ADDED", bank.Money(bank.CoinCredits))
 	a.snd.Play(a.snd.Coin)
 	a.save()
 }
@@ -226,7 +226,7 @@ func (a *App) drawMenu(screen *ebiten.Image) {
 	ui.DrawText(screen, "MAKE YOUR CHOICE", ui.ScreenW/2, a.menu.Bottom()+12, 24, ui.LightCyan, ui.AlignCenter, ui.AlignStart)
 
 	ui.DrawText(screen, "CREDITS", ui.ScreenW/2, creditsY, 11, ui.LightGray, ui.AlignCenter, ui.AlignStart)
-	ui.DrawText(screen, fmt.Sprint(a.bank.Credits), ui.ScreenW/2, creditsY+13, 32, ui.LightGreen, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, bank.Dollars(a.bank.Credits), ui.ScreenW/2, creditsY+13, 32, ui.LightGreen, ui.AlignCenter, ui.AlignStart)
 	ui.DrawText(screen, a.message, ui.ScreenW/2, messageY, 16, ui.Yellow, ui.AlignCenter, ui.AlignStart)
 
 	coin := fmt.Sprintf("INSERT COIN +$%d", bank.CoinCredits/100)

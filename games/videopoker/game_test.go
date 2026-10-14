@@ -252,13 +252,14 @@ func TestBestBet(t *testing.T) {
 		cards.New(cards.Four, cards.Clubs), cards.New(cards.Eight, cards.Diamonds),
 		cards.New(cards.Two, cards.Hearts),
 	}
+	g.m.Coins, g.m.CoinValue = 1, 25
 	_, one, _ := g.best()
-	g.m.Coins, g.m.CoinValue = 3, 25
+	g.m.Coins, g.m.CoinValue = 3, 100
 	held, more, _ := g.best()
 	if held != [poker.HandSize]bool{true, true} {
 		t.Errorf("held %v, want the two kings", held)
 	}
-	if diff := more - 75*one; diff > 1e-9 || diff < -1e-9 {
-		t.Errorf("worth %v at a bet of 75, and %v at a bet of 1", more, one)
+	if diff := more - 12*one; diff > 1e-9 || diff < -1e-9 {
+		t.Errorf("worth %v at a bet of 300, and %v at a bet of 25", more, one)
 	}
 }

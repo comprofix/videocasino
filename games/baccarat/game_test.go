@@ -333,7 +333,7 @@ func TestCutCardAndShuffle(t *testing.T) {
 func TestSaveAndResume(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "save.json")
 	g := New(bank.Open(path), testSounds())
-	g.setChip(50)
+	g.setChip(100)
 	for range 6 {
 		g.m.Clear()
 		bet(g, table.Banker)
@@ -350,7 +350,7 @@ func TestSaveAndResume(t *testing.T) {
 	if again.bank.Credits != g.bank.Credits || again.credits != again.bank.Credits {
 		t.Errorf("resumed with %d credits and %d on show, want %d", again.bank.Credits, again.credits, g.bank.Credits)
 	}
-	if again.m.Total() != 500 || again.m.LastTotal() != 50 || again.m.Chip != 500 || len(again.m.History) != 6 {
+	if again.m.Total() != 500 || again.m.LastTotal() != 100 || again.m.Chip != 500 || len(again.m.History) != 6 {
 		t.Errorf("resumed with %d on the table, %d remembered, a chip of %d and %d hands", again.m.Total(), again.m.LastTotal(), again.m.Chip, len(again.m.History))
 	}
 	if again.m.CardsLeft() != g.m.CardsLeft() || again.m.ToCut != g.m.ToCut || again.m.Fresh || again.cutShown {

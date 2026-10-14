@@ -10,11 +10,11 @@ import (
 )
 
 // The chips a player can choose from.
-var ChipChoices = []int{10, 50, 100, 500, 1000}
+var ChipChoices = []int{100, 500, 2500, 10_000, 100_000} // $1, $5, $25, $100 and $1,000
 
 const (
 	// MaxSpot is the most that can be bet on one spot.
-	MaxSpot = 5000
+	MaxSpot = 500_000 // $5,000
 	// HistoryLen is how many of the last numbers are remembered.
 	HistoryLen = 10
 )

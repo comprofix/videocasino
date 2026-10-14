@@ -353,7 +353,7 @@ func (g *Game) reset() {
 func (g *Game) insertCoin() {
 	g.bank.InsertCoin()
 	g.credits = g.bank.Credits
-	g.message = fmt.Sprintf("COIN INSERTED - %d CREDITS ADDED", bank.CoinCredits)
+	g.message = fmt.Sprintf("COIN INSERTED - %s ADDED", bank.Money(bank.CoinCredits))
 	g.snd.Play(g.snd.Coin)
 	g.save()
 }
@@ -403,7 +403,7 @@ func (g *Game) showHint() {
 	case [poker.HandSize]bool{true, true, true, true, true}:
 		g.message = "BEST PLAY: HOLD ALL FIVE CARDS"
 	default:
-		g.message = fmt.Sprintf("BEST PLAY: HOLD THE CARDS MARKED - WORTH %.1f CREDITS ON AVERAGE", value)
+		g.message = fmt.Sprintf("BEST PLAY: HOLD THE CARDS MARKED - WORTH $%.2f ON AVERAGE", value/100)
 	}
 }
 
@@ -506,7 +506,7 @@ func (g *Game) turnCards() {
 	g.win = g.m.Table.Pay(g.made, g.m.Coins) * g.m.CoinValue
 	switch {
 	case g.win > 0:
-		g.message = fmt.Sprintf("%s - YOU WIN %d!", strings.ToUpper(g.made.String()), g.win)
+		g.message = fmt.Sprintf("%s - YOU WIN %s!", strings.ToUpper(g.made.String()), bank.Money(g.win))
 	case g.bank.Credits == 0:
 		g.message = outOfCredits
 	default:
@@ -645,20 +645,16 @@ func (g *Game) drawPlay(screen *ebiten.Image) {
 
 	ui.DrawText(screen, g.message, ui.ScreenW/2, messageY, 16, ui.Yellow, ui.AlignCenter, ui.AlignStart)
 
-	drawStat(screen, "CREDITS", g.credits, 0, ui.LightGreen)
-	drawStat(screen, "COIN VALUE", g.m.CoinValue, 1, ui.White)
-	drawStat(screen, "COINS", g.m.Coins, 2, ui.White)
-	drawStat(screen, "BET", g.m.Bet(), 3, ui.White)
-	drawStat(screen, "WIN", g.win, 4, ui.Yellow)
+	drawStat(screen, "CREDITS", bank.Dollars(g.credits), 0, ui.LightGreen)
+	drawStat(screen, "COIN VALUE", bank.Money(g.m.CoinValue), 1, ui.White)
+	drawStat(screen, "COINS", fmt.Sprint(g.m.Coins), 2, ui.White)
+	drawStat(screen, "BET", bank.Money(g.m.Bet()), 3, ui.White)
+	drawStat(screen, "WIN", bank.Money(g.win), 4, ui.Yellow)
 
 	// The bet cannot be changed while a hand is being played.
 	locked := g.m.Dealt || g.turning
 	for i, v := range poker.CoinValues {
-		label := "CREDITS"
-		if v == 1 {
-			label = "CREDIT"
-		}
-		ui.DrawButton(screen, valueButton(i), v == g.m.CoinValue, locked, 12, fmt.Sprint(v), label)
+		ui.DrawButton(screen, valueButton(i), v == g.m.CoinValue, locked, 12, bank.Money(v), "COIN")
 	}
 	ui.DrawButton(screen, betOneButton, false, locked, 13, "BET", "ONE")
 	ui.DrawButton(screen, betMaxButton, false, locked, 13, "BET", "MAX")
@@ -717,7 +713,7 @@ func (g *Game) drawPaytable(screen *ebiten.Image) {
 		ui.DrawText(screen, strings.ToUpper(made.String()), payX+12, cy, 13, ink, ui.AlignStart, ui.AlignCenter)
 		for coins := 1; coins <= poker.MaxCoins; coins++ {
 			pay := g.m.Table.Pay(made, coins) * g.m.CoinValue
-			ui.DrawText(screen, fmt.Sprint(pay), colX(coins)+payColW-12, cy, 13, ink, ui.AlignEnd, ui.AlignCenter)
+			ui.DrawText(screen, bank.Money(pay), colX(coins)+payColW-12, cy, 13, ink, ui.AlignEnd, ui.AlignCenter)
 		}
 	}
 
@@ -728,9 +724,9 @@ func (g *Game) drawPaytable(screen *ebiten.Image) {
 }
 
 // drawStat draws a labelled number under the given card.
-func drawStat(screen *ebiten.Image, label string, value, column int, c color.Color) {
+func drawStat(screen *ebiten.Image, label, value string, column int, c color.Color) {
 	b := cardButton(column)
 	x := b.X + ui.CardW/2
 	ui.DrawText(screen, label, x, statY, 11, ui.LightGray, ui.AlignCenter, ui.AlignStart)
-	ui.DrawText(screen, fmt.Sprint(value), x, statY+13, 24, c, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, value, x, statY+13, 24, c, ui.AlignCenter, ui.AlignStart)
 }

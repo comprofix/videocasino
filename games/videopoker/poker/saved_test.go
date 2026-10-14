@@ -11,7 +11,7 @@ import (
 // the saved game is kept, between the deal and the draw.
 func TestSaveRestore(t *testing.T) {
 	m := New(bank.New(), 1, 2)
-	m.Coins, m.CoinValue = 4, 10
+	m.Coins, m.CoinValue = 4, 25
 	m.Deal()
 	m.ToggleHold(0)
 	m.ToggleHold(3)

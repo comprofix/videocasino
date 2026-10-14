@@ -13,11 +13,11 @@ import (
 
 // The chips a player can choose from. They are all even, so that a bet on
 // the banker's hand that is paid half is always paid whole credits.
-var ChipChoices = []int{10, 50, 100, 500, 1000}
+var ChipChoices = []int{100, 500, 2500, 10_000, 100_000} // $1, $5, $25, $100 and $1,000
 
 const (
 	// MaxBet is the most that can be bet on any one of the bets.
-	MaxBet = 5000
+	MaxBet = 500_000 // $5,000
 	// HistoryLen is how many of the last hands are remembered.
 	HistoryLen = 16
 )

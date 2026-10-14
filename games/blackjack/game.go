@@ -359,7 +359,7 @@ func (g *Game) reset() {
 func (g *Game) insertCoin() {
 	g.bank.InsertCoin()
 	g.credits = g.bank.Credits
-	g.message = fmt.Sprintf("COIN INSERTED - %d CREDITS ADDED", bank.CoinCredits)
+	g.message = fmt.Sprintf("COIN INSERTED - %s ADDED", bank.Money(bank.CoinCredits))
 	g.snd.Play(g.snd.Coin)
 	g.save()
 }
@@ -399,7 +399,7 @@ func (g *Game) pairNote() string {
 	case g.m.Pair == table.NoPair:
 		return "NO PAIR - "
 	}
-	return fmt.Sprintf("%s PAYS %d! - ", strings.ToUpper(g.m.Pair.String()), g.m.SideWin)
+	return fmt.Sprintf("%s PAYS %s! - ", strings.ToUpper(g.m.Pair.String()), bank.Money(g.m.SideWin))
 }
 
 // prompt says what can be done with the hand being played.
@@ -513,9 +513,9 @@ func (g *Game) result() string {
 	money := "NOTHING WON OR LOST"
 	switch {
 	case net > 0:
-		money = fmt.Sprintf("YOU WIN %d!", net)
+		money = fmt.Sprintf("YOU WIN %s!", bank.Money(net))
 	case net < 0:
-		money = fmt.Sprintf("YOU LOSE %d", -net)
+		money = fmt.Sprintf("YOU LOSE %s", bank.Money(-net))
 	}
 
 	switch {
@@ -562,8 +562,8 @@ func (g *Game) showHint() {
 	}
 	g.hint, g.hinting = a.Best, true
 	g.snd.Play(g.snd.Click)
-	g.message = fmt.Sprintf("BEST PLAY: %s - WORTH %+.1f CREDITS ON AVERAGE",
-		strings.ToUpper(a.Best.String()), a.Value()*float64(g.m.Stake))
+	g.message = fmt.Sprintf("BEST PLAY: %s - WORTH %s ON AVERAGE",
+		strings.ToUpper(a.Best.String()), bank.Worth(a.Value()*float64(g.m.Stake)))
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
@@ -724,10 +724,10 @@ func (g *Game) drawPlay(screen *ebiten.Image) {
 	if g.m.Dealt || g.revealing {
 		bet, side = g.m.Stake, g.m.Side
 	}
-	drawStat(screen, "CREDITS", g.credits, 0, ui.LightGreen)
-	drawStat(screen, "BET", bet, 1, ui.White)
-	drawStat(screen, "PERFECT PAIRS BET", side, 2, ui.White)
-	drawStat(screen, "WIN", g.win, 3, ui.Yellow)
+	drawStat(screen, "CREDITS", bank.Dollars(g.credits), 0, ui.LightGreen)
+	drawStat(screen, "BET", bank.Money(bet), 1, ui.White)
+	drawStat(screen, "PERFECT PAIRS BET", bank.Money(side), 2, ui.White)
+	drawStat(screen, "WIN", bank.Money(g.win), 3, ui.Yellow)
 
 	// The hand's buttons work only while there is a hand to play, and the
 	// bets only between hands.
@@ -747,10 +747,10 @@ func (g *Game) drawPlay(screen *ebiten.Image) {
 
 	locked := g.m.Dealt || g.revealing || g.shuffling
 	for i, n := range table.BetChoices {
-		ui.DrawButton(screen, betButton(i), n == g.m.Bet, locked, 13, fmt.Sprintf("BET %d", n))
+		ui.DrawButton(screen, betButton(i), n == g.m.Bet, locked, 13, "BET "+bank.Money(n))
 	}
 	for i, n := range table.SideChoices {
-		label := fmt.Sprintf("PAIRS %d", n)
+		label := "PAIRS " + bank.Money(n)
 		if n == 0 {
 			label = "PAIRS OFF"
 		}
@@ -833,11 +833,11 @@ func (g *Game) drawPanel(screen *ebiten.Image) {
 	}
 }
 
-// drawStat draws a labelled number in one of four columns under the table.
-func drawStat(screen *ebiten.Image, label string, value, column int, c color.Color) {
+// drawStat draws a labelled figure in one of four columns under the table.
+func drawStat(screen *ebiten.Image, label, value string, column int, c color.Color) {
 	x := tableX + (float64(column)+0.5)*tableW/4
 	ui.DrawText(screen, label, x, statY, 11, ui.LightGray, ui.AlignCenter, ui.AlignStart)
-	ui.DrawText(screen, fmt.Sprint(value), x, statY+13, 24, c, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, value, x, statY+13, 24, c, ui.AlignCenter, ui.AlignStart)
 }
 
 // drawShoe draws the shoe at the end of the table: a box of cards that
@@ -919,7 +919,7 @@ func (g *Game) drawHands(screen *ebiten.Image) {
 		if g.m.Dealt && i == g.m.Active {
 			ink = ui.Yellow
 		}
-		label := fmt.Sprintf("%s: %s    BET %d", name, totalText(h.Cards), h.Bet)
+		label := fmt.Sprintf("%s: %s    BET %s", name, totalText(h.Cards), bank.Money(h.Bet))
 		ui.DrawText(screen, label, cx, playerY-17, 13, ink, ui.AlignCenter, ui.AlignStart)
 		drawCards(screen, h.Cards, 0, cx, playerY, width)
 

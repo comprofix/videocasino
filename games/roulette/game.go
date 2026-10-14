@@ -284,7 +284,7 @@ func (g *Game) place() {
 		case g.bank.Credits == 0:
 			g.message = outOfCredits
 		case g.m.Bets[spot]+g.m.Chip > wheel.MaxSpot:
-			g.message = fmt.Sprintf("NO MORE THAN %d ON ONE BET", wheel.MaxSpot)
+			g.message = fmt.Sprintf("NO MORE THAN %s ON ONE BET", bank.Money(wheel.MaxSpot))
 		default:
 			g.message = "NOT ENOUGH CREDITS FOR THAT CHIP"
 		}
@@ -347,7 +347,7 @@ func (g *Game) reset() {
 func (g *Game) insertCoin() {
 	g.bank.InsertCoin()
 	g.credits = g.bank.Credits
-	g.message = fmt.Sprintf("COIN INSERTED - %d CREDITS ADDED", bank.CoinCredits)
+	g.message = fmt.Sprintf("COIN INSERTED - %s ADDED", bank.Money(bank.CoinCredits))
 	g.snd.Play(g.snd.Coin)
 	g.save()
 }
@@ -463,10 +463,10 @@ func (g *Game) land() {
 	case g.win == 0:
 		g.message = fmt.Sprintf("%d %s - NO WIN", n, colourName(n))
 	case g.win >= 10*g.result.Bet:
-		g.message = fmt.Sprintf("%d %s - YOU WIN %d", n, colourName(n), g.win)
+		g.message = fmt.Sprintf("%d %s - YOU WIN %s", n, colourName(n), bank.Money(g.win))
 		g.snd.Play(g.snd.BigWin)
 	default:
-		g.message = fmt.Sprintf("%d %s - YOU WIN %d", n, colourName(n), g.win)
+		g.message = fmt.Sprintf("%d %s - YOU WIN %s", n, colourName(n), bank.Money(g.win))
 		g.snd.Play(g.snd.Win)
 	}
 }
@@ -541,7 +541,7 @@ func (g *Game) drawHelp(screen *ebiten.Image) {
 		fmt.Sprintf("between two rows a six line, paying %d. The zero splits with 1, 2 and 3.", p[wheel.SixLine]),
 		fmt.Sprintf("A column or a dozen pays %d to 1. Red, black, odd, even, 1 to 18 and", p[wheel.Dozen]),
 		fmt.Sprintf("19 to 36 pay %d to 1. The zero is none of these: they all lose on it.", p[wheel.Reds]),
-		fmt.Sprintf("A bet can hold up to %d. Bets are paid for when the wheel is spun.", wheel.MaxSpot),
+		fmt.Sprintf("A bet can hold up to %s. Bets are paid for when the wheel is spun.", bank.Money(wheel.MaxSpot)),
 		"SPIN with nothing on the table makes the last bets again.",
 	}
 	for i, l := range lines {
@@ -598,7 +598,7 @@ func (g *Game) drawPlay(screen *ebiten.Image) {
 	g.drawTable(screen)
 
 	for i, n := range wheel.ChipChoices {
-		ui.DrawButton(screen, chipButton(i), n == g.m.Chip, g.spinning, 11, fmt.Sprint(n), "CHIP")
+		ui.DrawButton(screen, chipButton(i), n == g.m.Chip, g.spinning, 11, bank.Money(n), "CHIP")
 	}
 	ui.DrawButton(screen, clearButton, false, g.spinning, 13, "CLEAR")
 	ui.DrawButton(screen, rebetButton, false, g.spinning || g.m.LastTotal() == 0, 13, "REBET")
@@ -618,7 +618,7 @@ func (g *Game) drawPlay(screen *ebiten.Image) {
 		ui.DrawText(screen, s.String(), x, rowBY+4, 12, ui.LightCyan, ui.AlignCenter, ui.AlignStart)
 		note := fmt.Sprintf("PAYS %d TO 1", s.Pays())
 		if bet := g.m.Bets[spot]; bet > 0 {
-			note += fmt.Sprintf("    BET %d", bet)
+			note += "    BET " + bank.Money(bet)
 		}
 		ui.DrawText(screen, note, x, rowBY+22, 11, ui.White, ui.AlignCenter, ui.AlignStart)
 	}
@@ -676,14 +676,14 @@ func (g *Game) drawStatus(screen *ebiten.Image) {
 	if g.spinning {
 		bet = g.result.Bet
 	}
-	figure := func(i int, label string, v int, c color.Color) {
+	figure := func(i int, label, v string, c color.Color) {
 		y := 80 + float64(i)*44
 		ui.DrawText(screen, label, 690, y, 11, ui.LightGray, ui.AlignCenter, ui.AlignStart)
-		ui.DrawText(screen, fmt.Sprint(v), 690, y+13, 24, c, ui.AlignCenter, ui.AlignStart)
+		ui.DrawText(screen, v, 690, y+13, 24, c, ui.AlignCenter, ui.AlignStart)
 	}
-	figure(0, "CREDITS", g.credits, ui.LightGreen)
-	figure(1, "TOTAL BET", bet, ui.Yellow)
-	figure(2, "WIN", g.win, ui.White)
+	figure(0, "CREDITS", bank.Dollars(g.credits), ui.LightGreen)
+	figure(1, "TOTAL BET", bank.Money(bet), ui.Yellow)
+	figure(2, "WIN", bank.Money(g.win), ui.White)
 }
 
 // drawTable draws the table, the chips on it and the marker.

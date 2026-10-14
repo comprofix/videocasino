@@ -162,8 +162,9 @@ func TestBets(t *testing.T) {
 	}
 
 	// A spot holds no more than the limit.
-	m.Chip = 1000
-	for range MaxSpot / 1000 {
+	m.Chip = 100_000
+	b.Credits = 10 * MaxSpot
+	for range MaxSpot / 100_000 {
 		if !m.Place(seventeen) {
 			t.Fatal("could not bet up to the limit")
 		}
@@ -263,7 +264,7 @@ func TestSpin(t *testing.T) {
 func TestSaveAndRestore(t *testing.T) {
 	b := bank.New()
 	m := New(b, 3, 4)
-	m.Chip = 50
+	m.Chip = 100
 	m.Place(17)
 	m.Place(40)
 	m.Spin()
@@ -278,7 +279,7 @@ func TestSaveAndRestore(t *testing.T) {
 	if !reflect.DeepEqual(again.Save(), m.Save()) {
 		t.Errorf("restored %+v, want %+v", again.Save(), m.Save())
 	}
-	if again.Total() != 500 || again.LastTotal() != 600 || len(again.History) != 2 {
+	if again.Total() != 500 || again.LastTotal() != 700 || len(again.History) != 2 {
 		t.Errorf("restored %d on the table, %d remembered and %v", again.Total(), again.LastTotal(), again.History)
 	}
 
@@ -287,15 +288,15 @@ func TestSaveAndRestore(t *testing.T) {
 		Chip: 7,
 		Bets: []Stake{
 			{Spot: -1, Amount: 10}, {Spot: len(Spots), Amount: 10},
-			{Spot: 1, Amount: -10}, {Spot: 2, Amount: MaxSpot + 10}, {Spot: 3, Amount: 15},
-			{Spot: 4, Amount: 20}, {Spot: 4, Amount: 30},
+			{Spot: 1, Amount: -10}, {Spot: 2, Amount: MaxSpot + 10}, {Spot: 3, Amount: 150},
+			{Spot: 4, Amount: 200}, {Spot: 4, Amount: 300},
 		},
 		History: []int{5, -1, 37, 36, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
 	})
 	if again.Chip != ChipChoices[0] {
 		t.Errorf("a chip of 7 was restored as %d", again.Chip)
 	}
-	if got := stakes(again.Bets); !reflect.DeepEqual(got, []Stake{{4, 20}}) {
+	if got := stakes(again.Bets); !reflect.DeepEqual(got, []Stake{{4, 200}}) {
 		t.Errorf("bad bets were restored as %v", got)
 	}
 	if again.LastTotal() != 0 {
