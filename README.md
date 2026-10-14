@@ -44,18 +44,34 @@ go build -o videocasino .
 
 ## The main menu
 
-The menu lists the games in alphabetical order. Press a game's number, or
-click it, to open it. Each game has a menu of its own, with how to play it,
-the game itself and a note about it; the last choice there comes back to
-the main menu.
+The menu lists the games in alphabetical order, with EXIT under them. Each
+game has a menu of its own, with how to play it, the game itself and a note
+about it; the last choice there comes back to the main menu.
+
+Every menu works the same way. One entry is marked with a yellow bar: the
+up and down arrows move the bar and Enter chooses the entry it is on. The
+number beside an entry chooses it at once, and so does a click.
+
+With four games or more the main menu is set out in two columns of four,
+read down the left and then down the right. Games that do not fit go onto
+further pages: the last place on a page is then NEXT PAGE, and the first
+place on any page after the first is PREVIOUS PAGE. The left and right
+arrows turn the page too.
 
 | Key | Action |
 |---|---|
-| 1, 2, ... | Open a game; the last number exits |
+| Up / Down | Move to another entry |
+| Enter | Choose the entry you are on |
+| 1, 2, ... | Choose the entry with that number |
+| 0 | Exit |
+| Left / Right | The page before, or the next |
 | C | Insert a coin: 10,000 more credits ($100) |
 | R | Reset your credits to 10,000 ($100) |
 | S | Sound on or off |
-| Esc | Exit |
+| Esc | The page before; on the first page, exit |
+
+In a game's menu Esc goes back to the main menu. A game's help and about
+screens are left with Enter, Space, Esc or a click.
 
 ## Credits
 
@@ -456,8 +472,8 @@ perfect play, which auto hold gives you; holding by feel pays back less.
 - `main.go` has the window, the main menu and the switching between games.
 - `bank/` holds the shared credits, the settings and the save file.
 - `cards/` holds the card, rank and suit types that card games share.
-- `ui/` has the palette, text, shapes, buttons, card drawing and sound
-  that every game uses.
+- `ui/` has the palette, text, shapes, buttons, menus, card drawing and
+  sound that every game uses.
 - `games/blackjack/` has Blackjack's screens, with its rules in
   `games/blackjack/table/`.
 - `games/slot/` has the Slot Machine's screens, with its rules in

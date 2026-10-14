@@ -75,6 +75,7 @@ type Game struct {
 	ticks int
 	snd   *ui.Sounds
 	bank  *bank.Bank
+	menu  *ui.Menu
 
 	// The sound that is this game's own.
 	holdSound []byte
@@ -112,6 +113,17 @@ func New(b *bank.Bank, snd *ui.Sounds) *Game {
 	g := &Game{snd: snd, bank: b, autoHold: true}
 	g.holdSound = ui.Tone(880, 30, 0.15, true)
 	g.m = poker.NewRandom(b)
+	g.menu = &ui.Menu{
+		Items: []ui.MenuItem{
+			{Title: "HOW TO PLAY GAME"},
+			{Title: "PLAY GAME"},
+			{Title: "ABOUT THIS GAME"},
+			{Title: "BACK TO MAIN MENU"},
+		},
+		Columns: 1, Rows: 4,
+		Y: 190, RowH: 36,
+		Number: ui.White, Title: ui.LightRed,
+	}
 	g.message = "CHOOSE YOUR BET AND PRESS DEAL"
 
 	var s saved
@@ -204,19 +216,21 @@ func (g *Game) Update() (leave bool) {
 
 	switch g.scene {
 	case sceneMenu:
-		switch {
-		case ui.Pressed(ebiten.KeyDigit1, ebiten.KeyNumpad1):
+		switch g.menu.Update() {
+		case 0:
 			g.scene = sceneHelp
-		case ui.Pressed(ebiten.KeyDigit2, ebiten.KeyNumpad2):
+		case 1:
 			g.scene = scenePlay
-		case ui.Pressed(ebiten.KeyDigit3, ebiten.KeyNumpad3):
+		case 2:
 			g.scene = sceneAbout
-		case ui.Pressed(ebiten.KeyDigit4, ebiten.KeyNumpad4, ebiten.KeyEscape):
+		case 3, ui.MenuBack:
+			// The menu starts afresh the next time the game is chosen.
+			g.menu.Reset()
 			return true
 		}
 
 	case sceneHelp, sceneAbout:
-		if ui.Pressed(ebiten.KeyEnter, ebiten.KeyNumpadEnter, ebiten.KeySpace, ebiten.KeyEscape) {
+		if ui.Dismissed() {
 			g.scene = sceneMenu
 		}
 
@@ -526,12 +540,8 @@ func (g *Game) drawMenu(screen *ebiten.Image) {
 	ui.DrawText(screen, "VIDEO POKER", ui.ScreenW/2, 70, 48, ui.Yellow, ui.AlignCenter, ui.AlignStart)
 	ui.DrawText(screen, strings.ToUpper(g.m.Table.Name), ui.ScreenW/2, 128, 20, ui.White, ui.AlignCenter, ui.AlignStart)
 
-	items := []string{"HOW TO PLAY GAME", "PLAY GAME", "ABOUT THIS GAME", "BACK TO MAIN MENU"}
-	for i, item := range items {
-		y := 190 + float64(i)*36
-		ui.DrawText(screen, fmt.Sprintf("%d.", i+1), ui.ScreenW/2-130, y, 24, ui.White, ui.AlignStart, ui.AlignStart)
-		ui.DrawText(screen, item, ui.ScreenW/2-90, y, 24, ui.LightRed, ui.AlignStart, ui.AlignStart)
-	}
+	g.menu.Draw(screen)
+	ui.DrawText(screen, "ARROWS move    ENTER or NUMBER choose    ESC main menu", ui.ScreenW/2, 550, 11, ui.LightGray, ui.AlignCenter, ui.AlignStart)
 	ui.DrawText(screen, "MAKE YOUR CHOICE", ui.ScreenW/2, 350, 24, ui.LightCyan, ui.AlignCenter, ui.AlignStart)
 
 	// A royal flush, for luck.

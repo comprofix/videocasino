@@ -18,6 +18,14 @@ func Pressed(keys ...ebiten.Key) bool {
 	return false
 }
 
+// Dismissed reports whether the player has asked to leave a screen that is
+// only there to be read, such as a game's help: with ENTER, SPACE or ESC, or
+// a click anywhere.
+func Dismissed() bool {
+	return Pressed(ebiten.KeyEnter, ebiten.KeyNumpadEnter, ebiten.KeySpace, ebiten.KeyEscape) ||
+		inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft)
+}
+
 // Step returns the choice one place up or down from current, stopping at
 // either end of the list.
 func Step(choices []int, current, by int) int {
