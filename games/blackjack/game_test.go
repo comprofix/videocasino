@@ -193,8 +193,8 @@ func TestHint(t *testing.T) {
 func TestSaveAndResume(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "save.json")
 	g := New(bank.Open(path), testSounds())
-	g.setBet(50)
-	g.setSideBet(5)
+	g.setBet(5000)
+	g.setSideBet(500)
 	inPlay(t, g)
 
 	again := New(bank.Open(path), testSounds())
@@ -218,7 +218,7 @@ func TestSaveAndResume(t *testing.T) {
 
 	// With the hand over, only the bets are kept.
 	last := New(bank.Open(path), testSounds())
-	if last.m.Dealt || last.m.Bet != 50 || last.m.SideBet != 5 {
+	if last.m.Dealt || last.m.Bet != 5000 || last.m.SideBet != 500 {
 		t.Errorf("after the hand: %+v", last.m.Save())
 	}
 }

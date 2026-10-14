@@ -12,7 +12,7 @@ import (
 // splitGame returns a game saved in the middle of a split: the first hand
 // being played and the second waiting its turn.
 func splitGame() *Machine {
-	m := stacked(50, 5, "8s 6h 8d 3c")
+	m := stacked(5000, 500, "8s 6h 8d 3c")
 	m.Deal()
 	m.Split()
 	return m
@@ -47,7 +47,7 @@ func TestSaveRestore(t *testing.T) {
 	other.Stack(deck("Tc 2h Kd 9s")...)
 	other.Hit()   // 21 on the first hand
 	other.Stand() // 10 on the second, and the dealer goes bust
-	if other.Dealt || other.Last.Paid != 200 {
+	if other.Dealt || other.Last.Paid != 20_000 {
 		t.Errorf("played out the restored hand for %d: %+v", other.Last.Paid, other.Last)
 	}
 
@@ -109,7 +109,7 @@ func TestRestoreBad(t *testing.T) {
 			t.Errorf("%s: restored a hand: %+v", tt.name, m.Save())
 		}
 		// The bets are kept, and whatever was restored has to be playable.
-		if m.Bet != 50 || m.SideBet != 5 {
+		if m.Bet != 5000 || m.SideBet != 500 {
 			t.Errorf("%s: restored bets of %d and %d", tt.name, m.Bet, m.SideBet)
 		}
 		if !m.Deal() {

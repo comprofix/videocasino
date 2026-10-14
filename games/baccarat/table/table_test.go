@@ -224,8 +224,9 @@ func TestBets(t *testing.T) {
 	if !m.Remove(Player) || m.Bets[Player] != 0 || m.Remove(Player) {
 		t.Errorf("taking 500 off a bet of 200 left %d", m.Bets[Player])
 	}
-	m.Chip = 1000
-	for range MaxBet / 1000 {
+	m.Chip = 100_000
+	b.Credits = 10 * MaxBet
+	for range MaxBet / 100_000 {
 		if !m.Place(Banker) {
 			t.Fatal("could not bet up to the limit")
 		}
@@ -383,7 +384,7 @@ func TestShoe(t *testing.T) {
 func TestSaveAndRestore(t *testing.T) {
 	b := bank.New()
 	m := New(b, 3, 4)
-	m.Chip = 50
+	m.Chip = 100
 	for range 30 {
 		m.Place(Player)
 		m.Place(BankerPair)
@@ -397,7 +398,7 @@ func TestSaveAndRestore(t *testing.T) {
 	if !reflect.DeepEqual(again.Save(), m.Save()) {
 		t.Errorf("restored %+v, want %+v", again.Save(), m.Save())
 	}
-	if again.ToCut != m.ToCut || again.Fresh || again.Finished != m.Finished || again.Total() != 500 || again.LastTotal() != 100 {
+	if again.ToCut != m.ToCut || again.Fresh || again.Finished != m.Finished || again.Total() != 500 || again.LastTotal() != 200 {
 		t.Errorf("restored with the cut card in %d (want %d), fresh %v, %d on the table, %d remembered",
 			again.ToCut, m.ToCut, again.Fresh, again.Total(), again.LastTotal())
 	}

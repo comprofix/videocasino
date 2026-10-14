@@ -337,7 +337,7 @@ func TestSaveAndResume(t *testing.T) {
 	bet(g, 17)
 	g.spin()
 	land(t, g)
-	g.setChip(50)
+	g.setChip(100)
 	bet(g, 3)
 	g.mark = spotPoint[dozenSpots[1]]
 	g.place()
@@ -349,7 +349,7 @@ func TestSaveAndResume(t *testing.T) {
 	if again.bank.Credits != g.bank.Credits || again.credits != again.bank.Credits {
 		t.Errorf("resumed with %d credits and %d on show, want %d", again.bank.Credits, again.credits, g.bank.Credits)
 	}
-	if again.m.Total() != 100 || again.m.LastTotal() != 500 || again.m.Chip != 50 {
+	if again.m.Total() != 200 || again.m.LastTotal() != 500 || again.m.Chip != 100 {
 		t.Errorf("resumed with %d on the table, %d remembered and a chip of %d", again.m.Total(), again.m.LastTotal(), again.m.Chip)
 	}
 	// The ball lies in the last number to come up.
@@ -360,7 +360,7 @@ func TestSaveAndResume(t *testing.T) {
 	// The bets left on the table can be spun.
 	had := again.bank.Credits
 	again.spin()
-	if !again.spinning || again.bank.Credits != had-100+again.result.Win {
+	if !again.spinning || again.bank.Credits != had-200+again.result.Win {
 		t.Errorf("the spin: credits from %d to %d on a win of %d", had, again.bank.Credits, again.result.Win)
 	}
 }

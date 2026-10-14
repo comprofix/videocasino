@@ -10,10 +10,10 @@ import (
 )
 
 // The chips a player can choose from.
-var ChipChoices = []int{10, 50, 100, 500, 1000}
+var ChipChoices = []int{100, 500, 2500, 10_000, 100_000} // $1, $5, $25, $100 and $1,000
 
 // MaxBet is the most that can be bet on the ante, or on Pair Plus.
-const MaxBet = 5000
+const MaxBet = 500_000 // $5,000
 
 // Bet is one of the bets a player puts chips on. The play bet is not among
 // them: it is made by playing the hand, and is always the same as the ante.

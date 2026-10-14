@@ -28,3 +28,14 @@ func TestButtonHit(t *testing.T) {
 		}
 	}
 }
+
+func TestChipText(t *testing.T) {
+	for amount, want := range map[int]string{
+		100: "$1", 500: "$5", 2500: "$25", 99_900: "$999",
+		100_000: "1K", 250_000: "2.5K", 500_000: "5K",
+	} {
+		if got := chipText(amount); got != want {
+			t.Errorf("%d credits are written on a chip as %q, want %q", amount, got, want)
+		}
+	}
+}

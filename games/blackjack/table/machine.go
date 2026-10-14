@@ -13,13 +13,14 @@ import (
 	cardshoe "videocasino/shoe"
 )
 
-// BetChoices is the bets a player can choose from. They are all even, so
-// that a blackjack, which pays 3 to 2, always pays whole credits.
-var BetChoices = []int{10, 20, 50, 100, 500}
+// BetChoices is the bets a player can choose from: $10 to $500, in credits
+// of a cent. They are all even, so that a blackjack, which pays 3 to 2,
+// always pays whole credits.
+var BetChoices = []int{1000, 2000, 5000, 10_000, 50_000}
 
-// SideChoices is the Perfect Pairs bets a player can choose from. Nothing
-// is bet on it at 0.
-var SideChoices = []int{0, 5, 10, 25, 50}
+// SideChoices is the Perfect Pairs bets a player can choose from: $5 to
+// $50. Nothing is bet on it at 0.
+var SideChoices = []int{0, 500, 1000, 2500, 5000}
 
 // Hand is one of the player's hands: the one dealt, or one of the two it
 // was split into.

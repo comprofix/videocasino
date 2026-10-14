@@ -207,10 +207,10 @@ func TestBets(t *testing.T) {
 	if m.Deal() {
 		t.Error("dealt on Pair Plus alone")
 	}
-	m.Chip = 1000
-	b.Credits = 100_000
+	m.Chip = 100_000
+	b.Credits = 3 * MaxBet
 	m.Clear()
-	for range MaxBet / 1000 {
+	for range MaxBet / 100_000 {
 		if !m.Place(Ante) {
 			t.Fatal("could not bet up to the limit")
 		}
@@ -220,13 +220,13 @@ func TestBets(t *testing.T) {
 	}
 	// The bank must cover the ante twice over, for the play bet.
 	m.Clear()
-	b.Credits = 1999
+	b.Credits = 199_999
 	if m.Place(Ante) {
-		t.Error("put down an ante of 1000 with 1999 in the bank")
+		t.Error("put down an ante of $1,000 with $1,999.99 in the bank")
 	}
-	b.Credits = 2000
+	b.Credits = 200_000
 	if !m.Place(Ante) || m.Place(PairPlus) {
-		t.Error("with 2000 in the bank an ante of 1000 is all there is room for")
+		t.Error("with $2,000 in the bank an ante of $1,000 is all there is room for")
 	}
 	if m.Rebet() {
 		t.Error("bet again before anything had been bet")
@@ -318,7 +318,7 @@ func TestHand(t *testing.T) {
 func TestSaveAndRestore(t *testing.T) {
 	b := bank.New()
 	m := New(b, 3, 4)
-	m.Chip = 50
+	m.Chip = 100
 	m.Place(Ante)
 	m.Place(PairPlus)
 	m.next = deck("4s 5s 6s")
@@ -330,13 +330,13 @@ func TestSaveAndRestore(t *testing.T) {
 	if again.Save() != m.Save() {
 		t.Errorf("restored %+v, want %+v", again.Save(), m.Save())
 	}
-	if !again.Dealt || again.Hand != hand("4s 5s 6s") || again.PairPaid != 50*41 || again.Chip != 500 || again.LastTotal() != 100 {
+	if !again.Dealt || again.Hand != hand("4s 5s 6s") || again.PairPaid != 100*41 || again.Chip != 500 || again.LastTotal() != 200 {
 		t.Errorf("restored a hand of %v, Pair Plus paid %d, chip %d", again.Hand, again.PairPaid, again.Chip)
 	}
 	// It can be played out where it was left.
 	had := b.Credits
 	r, ok := again.Play()
-	if !ok || b.Credits != had-50+r.Paid {
+	if !ok || b.Credits != had-100+r.Paid {
 		t.Errorf("played the restored hand: %+v", r)
 	}
 
@@ -344,13 +344,13 @@ func TestSaveAndRestore(t *testing.T) {
 	m.Fold()
 	m.Chip = 10
 	m.Place(Ante)
-	want := Saved{Chip: 10, Bets: [Bets]int{Ante: 10}, Last: [Bets]int{PairPlus: 50, Ante: 50}}
+	want := Saved{Chip: 10, Bets: [Bets]int{Ante: 10}, Last: [Bets]int{PairPlus: 100, Ante: 100}}
 	if got := m.Save(); got != want {
 		t.Errorf("saved %+v, want %+v", got, want)
 	}
 
 	// A save that could not have come from play is put right.
-	good := Saved{Chip: 100, Last: [Bets]int{Ante: 100}, Dealt: true, Stake: [Bets]int{PairPlus: 50, Ante: 100}, Hand: hand("7c 7d Kh"), PairPaid: 100}
+	good := Saved{Chip: 100, Last: [Bets]int{Ante: 100}, Dealt: true, Stake: [Bets]int{PairPlus: 100, Ante: 100}, Hand: hand("7c 7d Kh"), PairPaid: 200}
 	again.Restore(good)
 	if !again.Dealt {
 		t.Fatal("a good hand was not restored")

@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	StartCredits = 10_000 // $100 at 100 credits to the dollar
-	CoinCredits  = 10_000 // credits added by inserting a coin: $100
+	StartCredits = 100_000 // $1,000 at 100 credits to the dollar
+	CoinCredits  = 100_000 // credits added by inserting a coin: $1,000
 )
 
 // Bank is the one balance every game plays from, with the settings that

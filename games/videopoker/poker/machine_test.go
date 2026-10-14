@@ -17,7 +17,7 @@ func TestNew(t *testing.T) {
 	if m.Bank.Credits != bank.StartCredits || m.Coins != 1 || m.CoinValue != CoinValues[0] || m.Dealt {
 		t.Errorf("a new machine starts with %+v", m.Save())
 	}
-	if m.Bet() != 1 {
+	if m.Bet() != CoinValues[0] {
 		t.Errorf("the smallest bet is %d", m.Bet())
 	}
 }

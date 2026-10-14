@@ -68,8 +68,8 @@ arrows turn the page too.
 | 1, 2, ... | Choose the entry with that number |
 | 0 | Exit |
 | Left / Right | The page before, or the next |
-| C | Insert a coin: 10,000 more credits ($100) |
-| R | Reset your credits to 10,000 ($100) |
+| C | Insert a coin: $1,000 more |
+| R | Reset your credits to $1,000 |
 | S | Sound on or off |
 | Esc | The page before; on the first page, exit |
 
@@ -82,10 +82,16 @@ There is one balance, the bank, and every game plays from it. A bet comes
 out of the bank and a win goes into it, so what you win in one game is
 there to play with in the others.
 
-You start with 10,000 credits ($100), at 100 credits to the dollar. The
-INSERT COIN button adds 10,000 more whenever you want them, and RESET puts
-the bank back to 10,000 whatever it held. Both are on the main menu and in
-each game, and act on the same bank wherever they are pressed.
+You start with $1,000. The INSERT COIN button adds $1,000 more whenever you
+want it, and RESET puts the bank back to $1,000 whatever it held. Both are
+on the main menu and in each game, and act on the same bank wherever they
+are pressed.
+
+A credit is a cent. The Slot Machine counts in credits, as poker machines
+do, so $1,000 is 100,000 credits there, with the dollars shown underneath.
+Every other game shows money in dollars, and bets as a casino would: $10
+at Blackjack, or a $25 chip at Roulette. Underneath they all count in
+cents, so every payout is exact, such as $7.50 for a blackjack on $5.
 
 When the credits run out a game says so and waits. Nothing is reset for
 you: insert a coin or press RESET to carry on.
@@ -141,8 +147,8 @@ This is the "no commission" game: a win on the banker is paid in full, with
 nothing taken from it, except when the banker wins with a 6. On a tie, bets
 on the two hands are handed back.
 
-The chips are 10, 50, 100, 500 and 1000 credits, and one bet can hold up to
-5,000. You can bet on several things at once. Chips on the table are paid
+The chips are $1, $5, $25, $100 and $1,000, the values of casino chips,
+and one bet can hold up to $5,000. You can bet on several things at once. Chips on the table are paid
 for when the hand is dealt, and no more can be put down than the bank holds.
 After a hand the table is cleared, with the winning chips left on show until
 you bet again. REBET puts the last bets back, and DEAL with nothing on the
@@ -185,8 +191,8 @@ without going past it: pictures count 10 and an ace 1 or 11.
 
 | Buttons | Choices |
 |---|---|
-| Bet | 10, 20, 50, 100 or 500 credits |
-| Perfect Pairs bet | Off, or 5, 10, 25 or 50 credits |
+| Bet | $10, $20, $50, $100 or $500 |
+| Perfect Pairs bet | Off, or $5, $10, $25 or $50 |
 | HIT | Take another card |
 | STAND | Play the hand as it is |
 | DOUBLE | Double the bet for one more card |
@@ -301,8 +307,8 @@ The zero splits with each of 1, 2 and 3, makes a street with 1 and 2 or
 with 2 and 3, and a corner with all three. It is not red or black, odd or
 even, high or low, and is in no column or dozen: all of those lose on it.
 
-The chips are 10, 50, 100, 500 and 1000 credits, and one bet can hold up to
-5,000. Chips on the table are paid for when the wheel is spun, and no more
+The chips are $1, $5, $25, $100 and $1,000, the values of casino chips,
+and one bet can hold up to $5,000. Chips on the table are paid for when the wheel is spun, and no more
 can be put down than the bank holds. After a spin the table is cleared, with
 the winning chips left on show until you bet again. REBET puts the last bets
 back, and SPIN with nothing on the table makes them again and spins.
@@ -483,8 +489,8 @@ The ante bonus is paid on the ante whenever you play the hand, even if the
 dealer beats it. Pair Plus is a bet of its own, settled at the deal: it is
 paid, or lost, before you decide to play or fold.
 
-The chips are 10, 50, 100, 500 and 1000 credits, and a bet can hold up to
-5,000. The bank must hold enough for the play bet as well as the bets on the
+The chips are $1, $5, $25, $100 and $1,000, the values of casino chips,
+and one bet can hold up to $5,000. The bank must hold enough for the play bet as well as the bets on the
 table, so that a hand can always be played. REBET puts the last bets back,
 and DEAL with nothing on the table makes them again and deals.
 
@@ -524,7 +530,7 @@ then press DEAL. A hand costs the coin value times the number of coins.
 
 | Buttons | Choices |
 |---|---|
-| Coin value | 1, 5, 10, 25 or 100 credits |
+| Coin value | 25c, $1, $5, $25 or $100 |
 | BET ONE | One more coin, from 1 up to 5 and round again |
 | BET MAX | Bets 5 coins and deals straight away |
 
@@ -566,7 +572,7 @@ What each hand pays for every coin bet:
 
 A pair of jacks, queens, kings or aces is the lowest hand that pays; a lower
 pair pays nothing. The paytable across the top of the screen shows the same
-prizes in credits, at the coin value you are playing, with a column for each
+prizes in dollars, at the coin value you are playing, with a column for each
 number of coins. The column for your bet is lit.
 
 The royal flush pays more than three times as much for each coin when you

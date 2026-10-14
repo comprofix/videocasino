@@ -11,7 +11,7 @@ import (
 
 // CoinValues is the worth in credits of the coins a player can choose to
 // bet with.
-var CoinValues = []int{1, 5, 10, 25, 100}
+var CoinValues = []int{25, 100, 500, 2500, 10_000} // 25c, $1, $5, $25 and $100
 
 // Result describes a hand once the draw has been made.
 type Result struct {
