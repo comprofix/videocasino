@@ -12,6 +12,7 @@ and they are all played from one balance of credits.
 | Roulette | A wheel with a single zero and the full table to bet on, from single numbers to red or black |
 | Slot Machine | A five-reel slot machine in the style of modern hold-and-respin poker machines, with free games, a link feature and four jackpots |
 | Three Card Poker | A hand of three cards played or folded against the dealer's, with the ante bonus and the Pair Plus side bet |
+| Ultimate Texas Hold'em | Two cards and a shared board against the dealer's two, betting once as the board is turned, with the Trips side bet |
 | Video Poker | 9/6 "full pay" Jacks or Better: you are dealt five cards, hold the ones you want, draw to replace the rest, and are paid for the hand you end up with |
 
 This is a hobby project. It is played with pretend credits only: no real
@@ -115,7 +116,8 @@ kept as how many of each card are left, not as cards in an order. The
 Blackjack dealer has no hidden card, a hand of Baccarat is dealt and
 settled all at once, and the dealer's cards in Three Card Poker are not
 dealt until you play. In Caribbean Stud only the dealer's card that is face
-up is dealt before you raise.
+up is dealt before you raise, and in Ultimate Texas Hold'em the board is
+dealt as it is turned and the dealer's cards only at the end.
 
 ## Baccarat
 
@@ -601,6 +603,87 @@ is shown at half the length of Blackjack's, and Space, Enter or a click
 cuts it short. The dealer's cards are not dealt until you play: the three lying face down are there for the look,
 and if you fold they stay as they are.
 
+## Ultimate Texas Hold'em
+
+You play two cards and a board of five shared with the dealer, against
+the dealer's two. It is on the main menu as ULTIMATE HOLD'EM. Put chips on
+the ANTE, which puts the same on the BLIND beside it, and on TRIPS if you
+want it, then press DEAL. The deck is shuffled and you are dealt two cards
+face up; the dealer's two lie face down.
+
+You make one bet, the PLAY bet, and the sooner you make it the more you
+can bet:
+
+| When | Check | Or bet |
+|---|---|---|
+| Before the flop | Turns the flop | 4 or 3 times the ante |
+| On the flop | Turns the turn and the river | 2 times the ante |
+| On the river | No checking: fold, and lose the ante and the blind | 1 times the ante |
+
+Once you bet, the rest of the board is turned and then the dealer's cards.
+The better best five of seven wins.
+
+| | You win | You lose | A tie |
+|---|---|---|---|
+| Play bet | Pays 1 to 1 | Lost | Handed back |
+| Ante | Pays 1 to 1, or handed back if the dealer has less than a pair | Lost, or handed back if the dealer has less than a pair | Handed back |
+| Blind | Pays by your hand, below | Lost | Handed back |
+
+Trips is a bet of its own on your best five of seven, whatever the dealer
+holds, and it is settled even if you fold.
+
+| Hand | Blind pays | Trips pays |
+|---|---|---|
+| Royal flush | 500 to 1 | 50 to 1 |
+| Straight flush | 50 to 1 | 40 to 1 |
+| Four of a kind | 10 to 1 | 30 to 1 |
+| Full house | 3 to 1 | 8 to 1 |
+| Flush | 3 to 2 | 6 to 1 |
+| Straight | 1 to 1 | 5 to 1 |
+| Three of a kind | Handed back on a win | 3 to 1 |
+| Less | Handed back on a win | Lost |
+
+The bets lie as they do on a real table: Trips in a diamond, the ante and
+the blind in circles side by side, and the play bet in a circle below.
+The chips are $1, $5, $25, $100 and $1,000, and each of the ante and
+Trips can hold up to $5,000. The bank must hold enough for a play bet of 4
+times the ante as well as the bets on the table, so that a hand can
+always be bet. REBET puts the last bets back, and DEAL with nothing on the
+table makes them again and deals.
+
+HINT gives what each choice open to you is worth, and marks the best. It
+is exact: on the flop and the river it counts every way the rest of the
+board and the dealer's cards can come; before the flop it looks up what
+was counted beforehand for each kind of starting hand. At the end, the
+five cards that make your hand are outlined in yellow, and the dealer's
+in cyan.
+
+The keyboard works too. The keys for betting work until a hand is dealt,
+and the keys for playing it after that. C and R are the coin and the reset
+here as in every game, so checking is K.
+
+| Key | Action |
+|---|---|
+| Space | Shuffle and deal |
+| Left / Right | Move the marker between Trips and the ante |
+| Enter | Put a chip where the marker is |
+| Backspace | Take a chip off there |
+| 1 to 5 | Choose a chip |
+| X | Clear the table |
+| B | Make the last bets again |
+| K | Check |
+| 4, 3, 2, 1 | Bet that many times the ante |
+| F | Fold, on the river |
+| H | Hint |
+| C | Insert a coin |
+| R | Reset your credits |
+| S | Sound on or off |
+| Esc | Back to the menu |
+
+Each hand is dealt from one deck, shuffled before every hand, with the
+short shuffle shown. The board is dealt only as it is turned, and the
+dealer's cards only at the end: if you fold they stay face down.
+
 ## Video Poker
 
 Choose a coin value and a number of coins with the buttons under the cards,
@@ -683,12 +766,14 @@ go test -v ./games/blackjack/table/
 go test -v ./games/caribbean/table/
 go test -v ./games/roulette/wheel/
 go test -v ./games/slot/machine/
+go test -v ./games/holdem/table/
 go test -v ./games/threecard/table/
 go test -v ./games/videopoker/poker/
 ```
 
-One calculation, the return of Caribbean Stud, is too slow for every run.
-It is kept apart behind `-long`, as told under Caribbean Stud below.
+Two calculations, the return of Caribbean Stud and the play before the flop
+in Ultimate Texas Hold'em, are too slow for every run. They are kept apart
+behind `-long`, as told under each game below.
 
 Every card and every spin is drawn from a cryptographic random number
 generator seeded by the operating system, and seeded afresh every hundred
@@ -791,6 +876,38 @@ Pair Plus pays back 97.68% of what is bet on it:
 | Flush | 1,096 times in 22,100 | 24.80% |
 | Pair | 3,744 times in 22,100 | 33.88% |
 
+### Ultimate Texas Hold'em
+
+Played perfectly, the ante, the blind and the play bet together pay back
+99.47% of what is bet on them, and the ante loses 2.18% of itself. The
+best play is to bet 4 times the ante before the flop on 37.7% of starting
+hands: any pair from threes up, any ace, and a good many kings, queens and
+jacks, as HINT shows.
+
+Trips pays back 98.10% of what is bet on it:
+
+| Hand | How often, of seven cards |
+|---|---|
+| Royal flush | Once in 30,940 |
+| Straight flush | Once in 3,591 |
+| Four of a kind | Once in 595 |
+| Full house | Once in 38.5 |
+| Flush | Once in 33.1 |
+| Straight | Once in 21.6 |
+| Three of a kind | Once in 20.7 |
+
+The play before the flop is worked out by counting every board of five,
+2.6 million of them, against every hand of two for the player and for the
+dealer. That takes most of a minute, so like Caribbean Stud's it is kept
+apart, and its results are kept in the code:
+
+```
+go test -v ./games/holdem/table/ -run TestPreflop -long -timeout 0
+```
+
+Adding `-update` writes what it counts into
+`games/holdem/table/preflop.go`.
+
 ### Video Poker
 
 Played perfectly at 5 coins, the game pays back 99.54% of what is bet over
@@ -821,8 +938,8 @@ perfect play, which auto hold gives you; holding by feel pays back less.
 - `cards/` holds the card, rank and suit types that card games share.
 - `ui/` has the palette, text, shapes, buttons, menus, card drawing and
   sound that every game uses.
-- `pokerhand/` ranks hands of five cards, for the poker games played
-  against the dealer.
+- `pokerhand/` ranks hands of five cards, and finds the best five of
+  seven, for the poker games played against the dealer.
 - `shoe/` holds the shoe that Blackjack and Baccarat are dealt from.
 - `shuffle/` shows cards being shuffled, for any game that shuffles: in
   full for a shoe, and at half the length for a single deck.
@@ -838,12 +955,14 @@ perfect play, which auto hold gives you; holding by feel pays back less.
   `games/slot/machine/`.
 - `games/threecard/` has Three Card Poker's screens, with its rules in
   `games/threecard/table/`.
+- `games/holdem/` has Ultimate Texas Hold'em's screens, with its rules in
+  `games/holdem/table/`.
 - `games/videopoker/` has Video Poker's screens, with its rules in
   `games/videopoker/poker/`.
 
 The rules packages, `bank/`, `cards/`, `pokerhand/` and `shoe/` have no
-graphics and are covered by tests. The art is drawn from simple shapes and the sound is generated,
-so there are no asset files.
+graphics and are covered by tests. The art is drawn from simple shapes and
+the sound is generated, so there are no asset files.
 
 ## Licence
 
