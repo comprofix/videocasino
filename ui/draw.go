@@ -70,6 +70,12 @@ func DrawText(dst *ebiten.Image, s string, x, y, size float64, c color.Color, h,
 	text.Draw(dst, s, &text.GoTextFace{Source: fontSource, Size: size}, op)
 }
 
+// TextWidth returns how wide s is when drawn at the given size.
+func TextWidth(s string, size float64) float64 {
+	w, _ := text.Measure(s, &text.GoTextFace{Source: fontSource, Size: size}, 0)
+	return w
+}
+
 func FillRect(dst *ebiten.Image, x, y, w, h float64, c color.Color) {
 	vector.FillRect(dst, float32(x), float32(y), float32(w), float32(h), c, false)
 }

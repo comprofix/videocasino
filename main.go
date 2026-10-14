@@ -47,33 +47,19 @@ const (
 var carpet = color.RGBA{96, 0, 0, 255}
 
 const (
-	rowsY = 160 // the first line of the menu
-	rowH  = 40
+	rowsY = 150 // the first line of the menu
+	rowH  = 38
 
-	creditsY = 372
-	messageY = 440
-	buttonY  = 474
+	creditsY = 388
+	messageY = 444
+	buttonY  = 476
 	buttonH  = 40
 )
-
-// rowButton is the place of a line on the menu. Clicking a line chooses it.
-func rowButton(i int) ui.Button {
-	return ui.Button{X: ui.ScreenW/2 - 160, Y: rowsY + float64(i)*rowH - 5, W: 320, H: rowH - 4}
-}
 
 var (
 	coinButton  = ui.Button{X: 232, Y: buttonY, W: 240, H: buttonH}
 	resetButton = ui.Button{X: 478, Y: buttonY, W: 90, H: buttonH}
 )
-
-// The keys that choose each line, along the top of the keyboard and on the
-// number pad.
-var rowKeys = [][2]ebiten.Key{
-	{ebiten.KeyDigit1, ebiten.KeyNumpad1},
-	{ebiten.KeyDigit2, ebiten.KeyNumpad2},
-	{ebiten.KeyDigit3, ebiten.KeyNumpad3},
-	{ebiten.KeyDigit4, ebiten.KeyNumpad4},
-}
 
 type App struct {
 	scene scene
@@ -81,6 +67,7 @@ type App struct {
 	bank  *bank.Bank
 
 	entries []entry
+	menu    *ui.Menu
 	playing game // the game being played, while there is one
 
 	message    string
@@ -108,6 +95,17 @@ func newApp() *App {
 		{title: "SLOT MACHINE", game: slot.New(a.bank, a.snd)},
 	}
 	slices.SortFunc(a.entries, func(x, y entry) int { return strings.Compare(x.title, y.title) })
+
+	// Two columns of four, with the way out under them.
+	a.menu = &ui.Menu{
+		Foot:    "EXIT",
+		Columns: 2, Rows: 4,
+		Y: rowsY, RowH: rowH,
+		Number: ui.White, Title: ui.White,
+	}
+	for _, e := range a.entries {
+		a.menu.Items = append(a.menu.Items, ui.MenuItem{Title: e.title, Dim: e.game == nil})
+	}
 	return a
 }
 
@@ -158,16 +156,13 @@ func (a *App) updateMenu() {
 		a.reset()
 	}
 
-	for i := range a.entries {
-		if ui.Pressed(rowKeys[i][:]...) || hit(rowButton(i)) {
-			a.choose(i)
-		}
-	}
-	// The last line is the way out.
-	exit := len(a.entries)
-	if ui.Pressed(rowKeys[exit][:]...) || ui.Pressed(ebiten.KeyEscape) || hit(rowButton(exit)) {
+	switch chosen := a.menu.Update(); chosen {
+	case ui.MenuNone:
+	case ui.MenuFoot, ui.MenuBack:
 		a.scene = sceneBye
 		a.snd.Play(a.snd.Bye)
+	default:
+		a.choose(chosen)
 	}
 }
 
@@ -221,20 +216,8 @@ func (a *App) Draw(screen *ebiten.Image) {
 func (a *App) drawMenu(screen *ebiten.Image) {
 	ui.DrawText(screen, "VIDEO CASINO", ui.ScreenW/2, 70, 48, ui.Yellow, ui.AlignCenter, ui.AlignStart)
 
-	row := func(i int, title string, ink color.Color) {
-		y := rowsY + float64(i)*rowH
-		ui.DrawText(screen, fmt.Sprintf("%d.", i+1), ui.ScreenW/2-130, y, 24, ink, ui.AlignStart, ui.AlignStart)
-		ui.DrawText(screen, title, ui.ScreenW/2-90, y, 24, ink, ui.AlignStart, ui.AlignStart)
-	}
-	for i, e := range a.entries {
-		ink := color.Color(ui.White)
-		if e.game == nil {
-			ink = ui.DarkGray
-		}
-		row(i, e.title, ink)
-	}
-	row(len(a.entries), "EXIT", ui.White)
-	ui.DrawText(screen, "MAKE YOUR CHOICE", ui.ScreenW/2, rowsY+float64(len(a.entries)+1)*rowH+14, 24, ui.LightCyan, ui.AlignCenter, ui.AlignStart)
+	a.menu.Draw(screen)
+	ui.DrawText(screen, "MAKE YOUR CHOICE", ui.ScreenW/2, a.menu.Bottom()+12, 24, ui.LightCyan, ui.AlignCenter, ui.AlignStart)
 
 	ui.DrawText(screen, "CREDITS", ui.ScreenW/2, creditsY, 11, ui.LightGray, ui.AlignCenter, ui.AlignStart)
 	ui.DrawText(screen, fmt.Sprint(a.bank.Credits), ui.ScreenW/2, creditsY+13, 32, ui.LightGreen, ui.AlignCenter, ui.AlignStart)
@@ -248,7 +231,7 @@ func (a *App) drawMenu(screen *ebiten.Image) {
 	if !a.snd.On {
 		sound = "OFF"
 	}
-	hint := fmt.Sprintf("1-%d choose    C coin    R reset    S sound %s    ESC exit", len(a.entries)+1, sound)
+	hint := fmt.Sprintf("ARROWS move    ENTER or NUMBER choose    C coin    R reset    S sound %s    ESC exit", sound)
 	ui.DrawText(screen, hint, ui.ScreenW/2, 550, 11, ui.LightGray, ui.AlignCenter, ui.AlignStart)
 }
 

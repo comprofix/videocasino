@@ -65,6 +65,7 @@ type Game struct {
 	ticks int
 	snd   *ui.Sounds
 	bank  *bank.Bank
+	menu  *ui.Menu
 
 	// The sounds that are this game's own.
 	startSound, stopSound []byte
@@ -114,6 +115,17 @@ func New(b *bank.Bank, snd *ui.Sounds) *Game {
 	g.startSound = append(ui.Tone(330, 40, 0.2, true), ui.Tone(440, 60, 0.2, true)...)
 	g.stopSound = ui.Tone(110, 70, 0.4, true)
 	g.m = machine.NewRandom(b)
+	g.menu = &ui.Menu{
+		Items: []ui.MenuItem{
+			{Title: "HOW TO PLAY GAME"},
+			{Title: "PLAY GAME"},
+			{Title: "ABOUT THIS GAME"},
+			{Title: "BACK TO MAIN MENU"},
+		},
+		Columns: 1, Rows: 4,
+		Y: 190, RowH: 36,
+		Number: ui.White, Title: ui.LightRed,
+	}
 	g.message = "CHOOSE YOUR BET AND PRESS SPIN"
 
 	var s machine.Saved
@@ -188,19 +200,21 @@ func (g *Game) Update() (leave bool) {
 
 	switch g.scene {
 	case sceneMenu:
-		switch {
-		case ui.Pressed(ebiten.KeyDigit1, ebiten.KeyNumpad1):
+		switch g.menu.Update() {
+		case 0:
 			g.scene = sceneHelp
-		case ui.Pressed(ebiten.KeyDigit2, ebiten.KeyNumpad2):
+		case 1:
 			g.scene = scenePlay
-		case ui.Pressed(ebiten.KeyDigit3, ebiten.KeyNumpad3):
+		case 2:
 			g.scene = sceneAbout
-		case ui.Pressed(ebiten.KeyDigit4, ebiten.KeyNumpad4, ebiten.KeyEscape):
+		case 3, ui.MenuBack:
+			// The menu starts afresh the next time the game is chosen.
+			g.menu.Reset()
 			return true
 		}
 
 	case sceneHelp, sceneAbout:
-		if ui.Pressed(ebiten.KeyEnter, ebiten.KeyNumpadEnter, ebiten.KeySpace, ebiten.KeyEscape) {
+		if ui.Dismissed() {
 			g.scene = sceneMenu
 		}
 
@@ -557,12 +571,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 func (g *Game) drawMenu(screen *ebiten.Image) {
 	ui.DrawText(screen, "SLOT MACHINE", ui.ScreenW/2, 90, 40, ui.Yellow, ui.AlignCenter, ui.AlignStart)
 
-	items := []string{"HOW TO PLAY GAME", "PLAY GAME", "ABOUT THIS GAME", "BACK TO MAIN MENU"}
-	for i, item := range items {
-		y := 190 + float64(i)*36
-		ui.DrawText(screen, fmt.Sprintf("%d.", i+1), ui.ScreenW/2-130, y, 24, ui.White, ui.AlignStart, ui.AlignStart)
-		ui.DrawText(screen, item, ui.ScreenW/2-90, y, 24, ui.LightRed, ui.AlignStart, ui.AlignStart)
-	}
+	g.menu.Draw(screen)
+	ui.DrawText(screen, "ARROWS move    ENTER or NUMBER choose    ESC main menu", ui.ScreenW/2, 550, 11, ui.LightGray, ui.AlignCenter, ui.AlignStart)
 	ui.DrawText(screen, "MAKE YOUR CHOICE", ui.ScreenW/2, 355, 24, ui.LightBlue, ui.AlignCenter, ui.AlignStart)
 
 	for s := machine.Ten; s < machine.NumSymbols; s++ {
