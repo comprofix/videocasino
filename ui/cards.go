@@ -51,6 +51,44 @@ func DrawCard(dst *ebiten.Image, c cards.Card, x, y, scale float64) {
 	DrawText(dst, rank, x+(CardW-10)*s, y+(CardH-3)*s, size*s, ink, AlignEnd, AlignEnd)
 }
 
+// DrawJoker draws the face of a joker with its top left corner at (x, y): a
+// white card with a jester's cap of three points, each with a bell, and
+// JOKER under it.
+func DrawJoker(dst *ebiten.Image, x, y, scale float64) {
+	s := scale
+	FillRoundRect(dst, x, y, CardW*s, CardH*s, 10*s, cardEdge)
+	FillRoundRect(dst, x+1.5*s, y+1.5*s, (CardW-3)*s, (CardH-3)*s, 9*s, cardFace)
+
+	// The letters down the corner, as the ranks are.
+	for i, l := range "JOKER" {
+		DrawText(dst, string(l), x+14*s, y+(6+float64(i)*17)*s, 15*s, cardRed, AlignCenter, AlignStart)
+	}
+
+	// The cap: a band, and three points rising from it, red, black and red,
+	// each with a bell at its tip.
+	cx, band := x+CardW/2*s+12*s, y+104*s
+	points := []struct {
+		dx, tipX, tipY float64
+		ink            color.Color
+	}{
+		{-20, -32, -54, cardRed},
+		{0, 0, -70, cardBlack},
+		{20, 32, -54, cardRed},
+	}
+	for _, p := range points {
+		FillPoly(dst, p.ink,
+			cx+(p.dx-14)*s, band,
+			cx+(p.dx+14)*s, band,
+			cx+p.tipX*s, band+p.tipY*s)
+	}
+	for _, p := range points {
+		FillCircle(dst, cx+p.tipX*s, band+p.tipY*s, 6*s, Gold)
+		FrameCircle(dst, cx+p.tipX*s, band+p.tipY*s, 6*s, 1.5*s, cardBlack)
+	}
+	FillRoundRect(dst, cx-36*s, band-2*s, 72*s, 14*s, 4*s, cardBlack)
+	DrawText(dst, "JOKER", cx, band+20*s, 22*s, cardRed, AlignCenter, AlignStart)
+}
+
 // DrawCardBack draws a card lying face down.
 func DrawCardBack(dst *ebiten.Image, x, y, scale float64) {
 	s := scale

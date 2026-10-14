@@ -9,6 +9,7 @@ and they are all played from one balance of credits.
 | Baccarat | The player's hand against the banker's from eight decks, with no commission and bets on a tie or a pair |
 | Blackjack | Six decks dealt down to a cut card, with doubling, splitting and the Perfect Pairs side bet |
 | Caribbean Stud | Five cards against the dealer's five, one of which is face up: fold, or raise and be paid by your hand |
+| Pai Gow Poker | Seven cards from a deck with a joker, set as a hand of five and a hand of two, both to beat the dealer's |
 | Roulette | A wheel with a single zero and the full table to bet on, from single numbers to red or black |
 | Slot Machine | A five-reel slot machine in the style of modern hold-and-respin poker machines, with free games, a link feature and four jackpots |
 | Three Card Poker | A hand of three cards played or folded against the dealer's, with the ante bonus and the Pair Plus side bet |
@@ -117,7 +118,8 @@ Blackjack dealer has no hidden card, a hand of Baccarat is dealt and
 settled all at once, and the dealer's cards in Three Card Poker are not
 dealt until you play. In Caribbean Stud only the dealer's card that is face
 up is dealt before you raise, and in Ultimate Texas Hold'em the board is
-dealt as it is turned and the dealer's cards only at the end.
+dealt as it is turned and the dealer's cards only at the end. In Pai Gow
+Poker the dealer's seven are dealt only when you play.
 
 ## Baccarat
 
@@ -362,6 +364,72 @@ is shown at half the length of Blackjack's, and Space, Enter or a click
 cuts it short. Only the dealer's card that is face up is dealt at first:
 the other four are drawn when you raise, and if you fold they stay face
 down.
+
+## Pai Gow Poker
+
+You and the dealer each get seven cards, from a deck of 52 and a joker.
+Put chips on the BET and press DEAL. The deck is shuffled and your seven
+are dealt face up; the dealer's lie face down.
+
+You set your seven as a HIGH hand of five and a LOW hand of two. The high
+hand must outrank the low; a setting where it does not, a foul, cannot be
+played. The low hand counts only pairs: two cards make a pair or nothing.
+
+| Your hands against the dealer's | The bet |
+|---|---|
+| Both better | Pays 1 to 1, less 5% commission |
+| One better, one not | Handed back: a push |
+| Neither better | Lost |
+
+A hand that ties the dealer's, a copy, goes to the dealer. Pushes are
+common, nearly four hands in ten.
+
+The joker counts as an ace, or as any card that completes a straight, a
+flush or a straight flush. Four aces and the joker make five aces, the best
+hand of all, above a royal flush. Ace, two, three, four, five is the lowest
+straight, as in the other games.
+
+The dealer sets the house way, a fixed set of rules with no choices in
+them. In short: with no pair, the highest card stays high and the next two
+go low; one pair stays high; two pairs are split, the lower pair low,
+unless they are small and an ace (or with two small pairs, a king) can go
+low instead; with three pairs the highest goes low; three of a kind stays
+high, except three aces; a full house is split, the pair low; straights
+and flushes are kept high where they can be; four of a kind and five aces
+have rules of their own. HOUSE WAY sets your hand the same way, and you can
+change it before you play.
+
+To set the hand, click a card, or press its number, 1 to 7: it drops into
+the low hand, outlined, and goes back up if chosen again. Choosing a third
+card puts it in place of the first. The label above the cards shows the
+two hands as they stand, and PLAY lights once they can be played. Once you
+play, both hands are laid out as five and two, and the dealer's cards are
+turned.
+
+The chips are $1, $5, $25, $100 and $1,000, and the bet can hold up to
+$5,000. REBET puts the last bet back, and DEAL with nothing on the table
+makes it again and deals.
+
+| Key | Action |
+|---|---|
+| Space | Shuffle and deal |
+| Enter | Put a chip on the bet |
+| Backspace | Take a chip off it |
+| 1 to 5 | Choose a chip |
+| X | Clear the table |
+| B | Make the last bet again |
+| 1 to 7 | With a hand dealt, move that card to the low hand or back |
+| Left / Right, Enter | Move the marker along the cards; move that card |
+| H | Set the hand the house way |
+| P | Play the hand |
+| C | Insert a coin |
+| R | Reset your credits |
+| S | Sound on or off |
+| Esc | Back to the menu |
+
+Each hand is dealt from one deck and the joker, shuffled before every hand,
+with the short shuffle shown. The dealer's cards are not dealt until you
+play.
 
 ## Roulette
 
@@ -756,7 +824,8 @@ the middle of a hand tells you nothing about them.
 
 ## Odds
 
-The odds of each game are worked out exactly from its rules, and the tests
+The odds of each game are worked out exactly from its rules, but for one
+figure in Pai Gow Poker, which is estimated, as told below. The tests
 check them against a great many hands and spins played out. Run the tests
 to recalculate them after changing a paytable or the rules:
 
@@ -767,13 +836,14 @@ go test -v ./games/caribbean/table/
 go test -v ./games/roulette/wheel/
 go test -v ./games/slot/machine/
 go test -v ./games/holdem/table/
+go test -v ./games/paigow/table/
 go test -v ./games/threecard/table/
 go test -v ./games/videopoker/poker/
 ```
 
-Two calculations, the return of Caribbean Stud and the play before the flop
-in Ultimate Texas Hold'em, are too slow for every run. They are kept apart
-behind `-long`, as told under each game below.
+Three are too slow for every run: the return of Caribbean Stud, the play
+before the flop in Ultimate Texas Hold'em, and the estimate for Pai Gow
+Poker. They are kept apart behind `-long`, as told under each game below.
 
 Every card and every spin is drawn from a cryptographic random number
 generator seeded by the operating system, and seeded afresh every hundred
@@ -835,6 +905,32 @@ asked:
 ```
 go test -v ./games/caribbean/table/ -run TestReturn -long -timeout 0
 ```
+
+### Pai Gow Poker
+
+This is the one figure in the program that is estimated rather than
+counted. Counting it exactly would mean every hand of seven you could be
+dealt against every hand of seven the dealer could then hold, each set the
+house way: about 10^15 pairs, far too many to count in any reasonable
+time, and the rule that both hands must win leaves no short cut like the
+ones that make the other games quick to count.
+
+So it is estimated by playing 128 million hands, with both sides setting
+the house way. Setting your hand the house way, the game pays back about
+97.15% of what is bet, to within 0.01% either way (two standard errors).
+30.3% of hands win, 38.1% push and 31.6% lose. The hands are drawn from
+fixed seeds, so the same count comes out every time, and it is kept in the
+code. Playing them takes a minute or two, so like the slow calculations it
+is played only when asked:
+
+```
+go test -v ./games/paigow/table/ -run TestEstimate -long -timeout 0
+```
+
+Adding `-update` writes what it counts into
+`games/paigow/table/estimate.go`. The house way and the ranking of straights
+are this game's own, so its figure is close to, but need not match, any
+casino's.
 
 ### Roulette
 
@@ -936,8 +1032,8 @@ perfect play, which auto hold gives you; holding by feel pays back less.
 - `main.go` has the window, the main menu and the switching between games.
 - `bank/` holds the shared credits, the settings and the save file.
 - `cards/` holds the card, rank and suit types that card games share.
-- `ui/` has the palette, text, shapes, buttons, menus, card drawing and
-  sound that every game uses.
+- `ui/` has the palette, text, shapes, buttons, menus, card drawing (the
+  joker too) and sound that every game uses.
 - `pokerhand/` ranks hands of five cards, and finds the best five of
   seven, for the poker games played against the dealer.
 - `shoe/` holds the shoe that Blackjack and Baccarat are dealt from.
@@ -957,6 +1053,8 @@ perfect play, which auto hold gives you; holding by feel pays back less.
   `games/threecard/table/`.
 - `games/holdem/` has Ultimate Texas Hold'em's screens, with its rules in
   `games/holdem/table/`.
+- `games/paigow/` has Pai Gow Poker's screens, with its rules and house way
+  in `games/paigow/table/`.
 - `games/videopoker/` has Video Poker's screens, with its rules in
   `games/videopoker/poker/`.
 
