@@ -10,6 +10,7 @@ and they are all played from one balance of credits.
 | Blackjack | Six decks dealt down to a cut card, with doubling, splitting and the Perfect Pairs side bet |
 | Roulette | A wheel with a single zero and the full table to bet on, from single numbers to red or black |
 | Slot Machine | A five-reel slot machine in the style of modern hold-and-respin poker machines, with free games, a link feature and four jackpots |
+| Three Card Poker | A hand of three cards played or folded against the dealer's, with the ante bonus and the Pair Plus side bet |
 | Video Poker | 9/6 "full pay" Jacks or Better: you are dealt five cards, hold the ones you want, draw to replace the rest, and are paid for the hand you end up with |
 
 This is a hobby project. It is played with pretend credits only: no real
@@ -104,8 +105,9 @@ Delete it to start again from scratch, jackpot pots included.
 Nothing in the save tells you a card before it is dealt. The cards drawn in
 Video Poker are chosen only at the draw. The Blackjack and Baccarat shoes are
 kept as how many of each card are left, not as cards in an order. The
-Blackjack dealer has no hidden card, and a hand of Baccarat is dealt and
-settled all at once.
+Blackjack dealer has no hidden card, a hand of Baccarat is dealt and
+settled all at once, and the dealer's cards in Three Card Poker are not
+dealt until you play.
 
 ## Baccarat
 
@@ -443,6 +445,78 @@ million spins.
 The pots are the Slot Machine's own. RESET only ever touches the credits:
 the MAJOR and GRAND keep growing until they are won.
 
+## Three Card Poker
+
+You play a hand of three cards against the dealer's three. Put chips on the
+ANTE, and on PAIR PLUS if you want it, then press DEAL. You are dealt three
+cards face up, and the dealer's lie face down. Then either:
+
+- FOLD, and lose the ante; or
+- PLAY, for a second bet the size of the ante, and the dealer's cards are
+  turned over.
+
+The dealer needs a queen high or better to qualify.
+
+| The dealer | Ante | Play bet |
+|---|---|---|
+| Does not qualify | Pays 1 to 1 | Handed back |
+| Qualifies, and your hand is better | Pays 1 to 1 | Pays 1 to 1 |
+| Qualifies, and the hands tie | Handed back | Handed back |
+| Qualifies, and has the better hand | Lost | Lost |
+
+Hands rank, from the best: straight flush, three of a kind, straight, flush,
+pair, high card. A straight beats a flush, because with three cards it is
+the harder to make. An ace is high, but also makes the lowest straight with
+a two and a three.
+
+Two things are paid on your own cards, whatever the dealer holds:
+
+| Hand | Ante bonus | Pair Plus |
+|---|---|---|
+| Straight flush | 5 to 1 | 40 to 1 |
+| Three of a kind | 4 to 1 | 30 to 1 |
+| Straight | 1 to 1 | 6 to 1 |
+| Flush | | 4 to 1 |
+| Pair | | 1 to 1 |
+
+The ante bonus is paid on the ante whenever you play the hand, even if the
+dealer beats it. Pair Plus is a bet of its own, settled at the deal: it is
+paid, or lost, before you decide to play or fold.
+
+The chips are 10, 50, 100, 500 and 1000 credits, and a bet can hold up to
+5,000. The bank must hold enough for the play bet as well as the bets on the
+table, so that a hand can always be played. REBET puts the last bets back,
+and DEAL with nothing on the table makes them again and deals.
+
+HINT says whether the hand is better played or folded, and what playing it
+is worth. It is exact: your hand is set against every hand the dealer could
+be dealt from the rest of the deck. It comes to playing a queen, six and
+four or better.
+
+The keyboard works too. The keys for betting work until a hand is dealt,
+and the keys for playing it after that:
+
+| Key | Action |
+|---|---|
+| Space | Deal |
+| Left / Right | Move the marker between the bets |
+| Enter | Put a chip where the marker is |
+| Backspace | Take a chip off there |
+| 1 to 5 | Choose a chip |
+| X | Clear the table |
+| B | Make the last bets again |
+| P or 1 | Play the hand |
+| F or 2 | Fold the hand |
+| H | Hint |
+| C | Insert a coin |
+| R | Reset your credits |
+| S | Sound on or off |
+| Esc | Back to the menu |
+
+Each hand is dealt from one deck, freshly shuffled. The dealer's cards are
+not dealt until you play: the three lying face down are there for the look,
+and if you fold they stay as they are.
+
 ## Video Poker
 
 Choose a coin value and a number of coins with the buttons under the cards,
@@ -524,6 +598,7 @@ go test -v ./games/baccarat/table/
 go test -v ./games/blackjack/table/
 go test -v ./games/roulette/wheel/
 go test -v ./games/slot/machine/
+go test -v ./games/threecard/table/
 go test -v ./games/videopoker/poker/
 ```
 
@@ -594,6 +669,23 @@ time. The link feature comes up about once in 82 spins, counting those a
 giant chip starts. The return is the same at every bet apart from the
 GRAND, which lifts it to nearly 95% at the smallest bet.
 
+### Three Card Poker
+
+Played perfectly, the ante and the play bet together pay back 97.99% of
+what is bet on them. Put another way, the ante loses 3.37% of itself: the
+two figures differ because the play bet is made on only 67.4% of hands.
+Playing by feel pays back less; HINT gives the perfect play.
+
+Pair Plus pays back 97.68% of what is bet on it:
+
+| Hand | How often | Share of what is bet |
+|---|---|---|
+| Straight flush | 48 times in 22,100 | 8.90% |
+| Three of a kind | 52 times in 22,100 | 7.29% |
+| Straight | 720 times in 22,100 | 22.81% |
+| Flush | 1,096 times in 22,100 | 24.80% |
+| Pair | 3,744 times in 22,100 | 33.88% |
+
 ### Video Poker
 
 Played perfectly at 5 coins, the game pays back 99.54% of what is bet over
@@ -634,6 +726,8 @@ perfect play, which auto hold gives you; holding by feel pays back less.
   `games/roulette/wheel/`.
 - `games/slot/` has the Slot Machine's screens, with its rules in
   `games/slot/machine/`.
+- `games/threecard/` has Three Card Poker's screens, with its rules in
+  `games/threecard/table/`.
 - `games/videopoker/` has Video Poker's screens, with its rules in
   `games/videopoker/poker/`.
 
