@@ -7,6 +7,7 @@ and they are all played from one balance of credits.
 | Game | What it is |
 |---|---|
 | Blackjack | Six decks dealt down to a cut card, with doubling, splitting and the Perfect Pairs side bet |
+| Roulette | A wheel with a single zero and the full table to bet on, from single numbers to red or black |
 | Slot Machine | A five-reel slot machine in the style of modern hold-and-respin poker machines, with free games, a link feature and four jackpots |
 | Video Poker | 9/6 "full pay" Jacks or Better: you are dealt five cards, hold the ones you want, draw to replace the rest, and are paid for the hand you end up with |
 
@@ -93,7 +94,8 @@ Everything is saved after every change, so you can close the program at any
 time and carry on later with the same credits, the same bet in each game,
 and anything left unfinished: a hand that has been dealt but not played
 out, free games still to play, or a link feature part-way through. The
-Blackjack shoe is kept as it stands, and so is whether the sound is on.
+Blackjack shoe is kept as it stands, as are the chips on the Roulette table
+and whether the sound is on.
 
 The save is one small file, `save.json`, in the folder the program is in.
 Delete it to start again from scratch, jackpot pots included.
@@ -203,6 +205,60 @@ dealer and the best play of one depends on every way the other could go. A
 split is weighed up from the cards on the table, as if the other hand were
 to draw no more. That is exact for the second of the two hands once the
 first is finished, and close for the rest.
+
+## Roulette
+
+Choose a chip, put chips on the table and press SPIN. The ball comes to
+rest on one of 37 numbers: 1 to 36 and a single zero.
+
+With the mouse, click where the chip is to go and right click to take it
+off again. A click in the middle of a number bets on the number; a click
+near a line or a corner bets on the line or the corner.
+
+| Bet | Where the chip goes | Pays |
+|---|---|---|
+| Straight up | On a number | 35 to 1 |
+| Split | On the line between two numbers | 17 to 1 |
+| Street | At the foot of a row of three | 11 to 1 |
+| Corner | Where four numbers meet | 8 to 1 |
+| Six line | At the foot of the line between two rows | 5 to 1 |
+| Column, dozen | In its box | 2 to 1 |
+| Red, black, odd, even, 1 to 18, 19 to 36 | In its box | 1 to 1 |
+
+The zero splits with each of 1, 2 and 3, makes a street with 1 and 2 or
+with 2 and 3, and a corner with all three. It is not red or black, odd or
+even, high or low, and is in no column or dozen: all of those lose on it.
+
+The chips are 10, 50, 100, 500 and 1000 credits, and one bet can hold up to
+5,000. Chips on the table are paid for when the wheel is spun, and no more
+can be put down than the bank holds. After a spin the table is cleared, with
+the winning chips left on show until you bet again. REBET puts the last bets
+back, and SPIN with nothing on the table makes them again and spins.
+
+The keyboard works too. A marker shows the bet you are on, lights up the
+numbers it covers, and its name and what it pays are shown under the table.
+
+| Key | Action |
+|---|---|
+| Space | Spin |
+| Arrows | Move the marker; hold one down to keep it moving |
+| Enter | Put a chip where the marker is |
+| Backspace | Take a chip off there |
+| 1 to 5 | Choose a chip |
+| X | Clear the table |
+| B | Make the last bets again |
+| C | Insert a coin |
+| R | Reset your credits |
+| S | Sound on or off |
+| Esc | Back to the menu |
+
+### The wheel
+
+The wheel turns one way while the ball runs round the rim the other way.
+The ball slows, drops, bounces across the pockets and comes to rest in one,
+then rides round with the wheel as it stops. Space, Enter or a click cuts
+the spin short. It is for show: the number is chosen the moment SPIN is
+pressed. The numbers lie round the wheel as they do on a real one.
 
 ## Slot Machine
 
@@ -395,14 +451,15 @@ to recalculate them after changing a paytable or the rules:
 
 ```
 go test -v ./games/blackjack/table/
+go test -v ./games/roulette/wheel/
 go test -v ./games/slot/machine/
 go test -v ./games/videopoker/poker/
 ```
 
 Every card and every spin is drawn from a cryptographic random number
 generator seeded by the operating system, and seeded afresh every hundred
-hands or spins. No spin of the Slot Machine and no hand of Video Poker
-depends on the ones before it. Blackjack is the exception by design: its
+hands or spins. No spin of the Slot Machine or the Roulette wheel and no hand of Video
+Poker depends on the ones before it. Blackjack is the exception by design: its
 hands come from one shoe until it is shuffled.
 
 ### Blackjack
@@ -426,6 +483,12 @@ shoe, and that too moves as the shoe runs down:
 | Mixed | 12 times in 311 | 27.01% |
 
 A pair of some kind comes up about once in 13.5 hands.
+
+### Roulette
+
+Each of the 37 pockets is as likely as any other, and every bet pays as if
+there were 36. So every bet on the table pays back the same, 36 parts in
+37, which is 97.30% of what is bet, however the game is played.
 
 ### Slot Machine
 
@@ -476,6 +539,8 @@ perfect play, which auto hold gives you; holding by feel pays back less.
   sound that every game uses.
 - `games/blackjack/` has Blackjack's screens, with its rules in
   `games/blackjack/table/`.
+- `games/roulette/` has Roulette's screens, with its rules in
+  `games/roulette/wheel/`.
 - `games/slot/` has the Slot Machine's screens, with its rules in
   `games/slot/machine/`.
 - `games/videopoker/` has Video Poker's screens, with its rules in

@@ -88,6 +88,11 @@ func FillCircle(dst *ebiten.Image, cx, cy, r float64, c color.Color) {
 	vector.FillCircle(dst, float32(cx), float32(cy), float32(r), c, true)
 }
 
+// FrameCircle draws the outline of a circle.
+func FrameCircle(dst *ebiten.Image, cx, cy, r, width float64, c color.Color) {
+	vector.StrokeCircle(dst, float32(cx), float32(cy), float32(r), float32(width), c, true)
+}
+
 func DrawLine(dst *ebiten.Image, x0, y0, x1, y1, width float64, c color.Color) {
 	vector.StrokeLine(dst, float32(x0), float32(y0), float32(x1), float32(y1), float32(width), c, true)
 }
