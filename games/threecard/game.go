@@ -14,6 +14,7 @@ import (
 	"videocasino/bank"
 	"videocasino/cards"
 	"videocasino/games/threecard/table"
+	"videocasino/shuffle"
 	"videocasino/ui"
 )
 
@@ -52,6 +53,10 @@ var (
 	brass = color.RGBA{184, 140, 52, 255}
 )
 
+// shuffleLength is the shuffle shown before every hand: a single deck, so
+// the short one.
+const shuffleLength = shuffle.Short
+
 type scene int
 
 const (
@@ -81,6 +86,11 @@ type Game struct {
 	seen         bool
 	lastX, lastY int
 
+	// The deck is shuffled before every hand, and that is shown before the
+	// cards are dealt.
+	shuffling    bool
+	shuffleStart int // the tick it began at
+
 	// The player's cards are dealt one by one, and so are the dealer's
 	// turned over once the hand is played. The machine has settled the hand
 	// by then, and the result is shown once the last card is up.
@@ -97,8 +107,9 @@ type Game struct {
 	advice  table.Advice
 	hinting bool // the hint is on show
 
-	// The sound that is this game's own.
-	chipSound []byte
+	// The sounds that are this game's own.
+	chipSound   []byte
+	riffleSound []byte
 
 	credits int // credits on display; a win is added once the cards are shown
 	win     int
@@ -125,6 +136,7 @@ func New(b *bank.Bank, snd *ui.Sounds) *Game {
 	g.m = table.NewRandom(b)
 	g.message = "PLACE YOUR BETS"
 	g.chipSound = ui.Tone(1480, 22, 0.14, true)
+	g.riffleSound = shuffle.Sound()
 
 	var s table.Saved
 	if b.Load(saveName, &s) {
@@ -217,9 +229,14 @@ func (g *Game) Update() (leave bool) {
 
 func (g *Game) updatePlay() {
 	click := inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft)
+	skip := click || ui.Pressed(ebiten.KeySpace, ebiten.KeyEnter, ebiten.KeyNumpadEnter)
+	// The deal key or a click cuts short the shuffle, and the cards.
+	if g.shuffling {
+		g.shuffleStep(skip)
+		return
+	}
 	if g.showing {
-		// The deal key or a click cuts the cards short.
-		g.show(click || ui.Pressed(ebiten.KeySpace, ebiten.KeyEnter, ebiten.KeyNumpadEnter))
+		g.show(skip)
 		return
 	}
 	// The bank may have changed while the game was not being played.
@@ -281,7 +298,7 @@ func (g *Game) updatePlay() {
 	case hit(rebetButton), ui.Pressed(ebiten.KeyB):
 		g.rebet()
 	case hit(dealButton), ui.Pressed(ebiten.KeySpace):
-		g.deal()
+		g.pressDeal()
 	case ui.Pressed(ebiten.KeyEnter, ebiten.KeyNumpadEnter):
 		g.place()
 	case ui.Pressed(ebiten.KeyBackspace, ebiten.KeyDelete):
@@ -392,6 +409,40 @@ func (g *Game) insertCoin() {
 	g.message = fmt.Sprintf("COIN INSERTED - %s ADDED", bank.Money(bank.CoinCredits))
 	g.snd.Play(g.snd.Coin)
 	g.save()
+}
+
+// pressDeal shuffles the deck and then deals. With nothing on the table the
+// bets of the last hand are made again first. If no hand can be dealt there
+// is no shuffle to show: it says why.
+func (g *Game) pressDeal() {
+	if g.m.Dealt {
+		return
+	}
+	if g.m.Total() == 0 {
+		g.m.Rebet()
+	}
+	if !g.m.CanDeal() {
+		g.deal() // which says why not
+		return
+	}
+	g.clearWin()
+	g.message = "SHUFFLING"
+	g.shuffling = true
+	g.shuffleStart = g.ticks
+}
+
+// shuffleStep carries the shuffle on by a tick, and deals the hand when it
+// is over or has been cut short.
+func (g *Game) shuffleStep(skip bool) {
+	t := g.ticks - g.shuffleStart
+	if skip || t >= shuffleLength.Ticks() {
+		g.shuffling = false
+		g.deal()
+		return
+	}
+	if shuffleLength.Falls(t) {
+		g.snd.Play(g.riffleSound)
+	}
 }
 
 // deal has the machine deal the player a hand, then shows its cards one by
@@ -601,7 +652,7 @@ func (g *Game) drawHelp(screen *ebiten.Image) {
 	}
 
 	keys := [][2]string{
-		{"SPACE", "deal"},
+		{"SPACE", "shuffle and deal"},
 		{"LEFT / RIGHT", "move the marker between the bets"},
 		{"ENTER / BACKSPACE", "put a chip down, or take one off"},
 		{"1 to 5", "choose a chip"},
@@ -675,6 +726,11 @@ func (g *Game) drawPlay(screen *ebiten.Image) {
 	dealerUp := g.result.Dealer[:g.dealerShown]
 	done := g.over && !g.showing
 
+	// While the deck is shuffled the table is clear.
+	if g.shuffling {
+		shuffleLength.Draw(screen, g.ticks-g.shuffleStart, handX, (dealerY+playerY+cardH)/2, cardScale)
+	}
+
 	label := "DEALER"
 	if g.dealerShown == table.HandSize {
 		label = "DEALER: " + g.result.Dealer.Score().String()
@@ -682,8 +738,12 @@ func (g *Game) drawPlay(screen *ebiten.Image) {
 			label += " - DOES NOT QUALIFY"
 		}
 	}
-	ui.DrawText(screen, label, handX, dealerY-18, 13, ui.White, ui.AlignCenter, ui.AlignStart)
-	drawHand(screen, dealerUp, dealerY)
+	if !g.shuffling {
+		ui.DrawText(screen, label, handX, dealerY-18, 13, ui.White, ui.AlignCenter, ui.AlignStart)
+	}
+	if !g.shuffling {
+		drawHand(screen, dealerUp, dealerY)
+	}
 
 	label, ink := "YOUR HAND", color.Color(ui.White)
 	held := g.playerShown == table.HandSize
@@ -693,8 +753,12 @@ func (g *Game) drawPlay(screen *ebiten.Image) {
 			ink = ui.Yellow
 		}
 	}
-	ui.DrawText(screen, label, handX, playerY-18, 13, ink, ui.AlignCenter, ui.AlignStart)
-	drawHand(screen, playerUp, playerY)
+	if !g.shuffling {
+		ui.DrawText(screen, label, handX, playerY-18, 13, ink, ui.AlignCenter, ui.AlignStart)
+	}
+	if !g.shuffling {
+		drawHand(screen, playerUp, playerY)
+	}
 
 	ui.DrawText(screen, g.message, handX, messageY, 13, ui.Yellow, ui.AlignCenter, ui.AlignStart)
 
@@ -707,8 +771,9 @@ func (g *Game) drawPlay(screen *ebiten.Image) {
 
 	// The buttons that bet are locked while a hand is played, and those
 	// that play it are locked until one is dealt.
-	betting := !g.m.Dealt && !g.showing
-	deciding := g.m.Dealt && !g.showing
+	busy := g.showing || g.shuffling
+	betting := !g.m.Dealt && !busy
+	deciding := g.m.Dealt && !busy
 	for i, n := range table.ChipChoices {
 		ui.DrawButton(screen, chipButton(i), n == g.m.Chip, !betting, 11, bank.Money(n), "CHIP")
 	}
@@ -786,7 +851,7 @@ func (g *Game) drawBets(screen *ebiten.Image) {
 	for b := table.Bet(0); b < table.Bets; b++ {
 		at := betButton(int(b))
 		box(at, b.String(), notes[b], bets[b], lit[b])
-		if b == g.mark && !inHand {
+		if b == g.mark && !inHand && !g.shuffling {
 			ui.FrameRect(screen, at.X+1, at.Y+1, at.W-2, at.H-2, 2, ui.White)
 		}
 	}

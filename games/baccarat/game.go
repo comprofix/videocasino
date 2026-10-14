@@ -391,12 +391,12 @@ func (g *Game) pressDeal() {
 // is over or has been cut short.
 func (g *Game) shuffleStep(skip bool) {
 	t := g.ticks - g.shuffleStart
-	if skip || t >= shuffle.Ticks {
+	if skip || t >= shuffle.Full.Ticks() {
 		g.shuffling = false
 		g.deal()
 		return
 	}
-	if shuffle.Falls(t) {
+	if shuffle.Full.Falls(t) {
 		g.snd.Play(g.riffleSound)
 	}
 }
@@ -673,7 +673,7 @@ func (g *Game) drawPlay(screen *ebiten.Image) {
 	// burnt cards are then shown before the hand is.
 	switch down, burning := g.burning(); {
 	case g.shuffling:
-		shuffle.Draw(screen, g.ticks-g.shuffleStart, (playerX+bankerX)/2, handsY+cardH/2, cardScale)
+		shuffle.Full.Draw(screen, g.ticks-g.shuffleStart, (playerX+bankerX)/2, handsY+cardH/2, cardScale)
 	case burning:
 		g.drawBurn(screen, down)
 	default:
@@ -743,7 +743,7 @@ func (g *Game) drawShoe(screen *ebiten.Image) {
 	full := float64(g.m.CardsLeft()) / table.ShoeSize
 	if g.shuffling {
 		full = float64(g.shuffleFrom) / table.ShoeSize
-		full += (1 - full) * shuffle.Done(g.ticks-g.shuffleStart)
+		full += (1 - full) * shuffle.Full.Done(g.ticks-g.shuffleStart)
 	}
 
 	// The cut card stands that many cards in from the front of what is

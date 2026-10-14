@@ -230,12 +230,17 @@ func (m *Machine) Rebet() bool {
 	return true
 }
 
+// CanDeal reports whether Deal would deal a hand: none is waiting, there is
+// an ante, and the bank can cover the bets and the play bet to follow.
+func (m *Machine) CanDeal() bool {
+	return !m.Dealt && m.Bets[Ante] > 0 && Needed(m.Bets) <= m.Bank.Credits
+}
+
 // Deal takes the bets from the bank and deals the player a hand, and
 // settles Pair Plus on it straight away. It reports false and deals nothing
-// if a hand is waiting, if there is no ante, or if the bank could not cover
-// the bets and the play bet to follow.
+// if CanDeal does.
 func (m *Machine) Deal() bool {
-	if m.Dealt || m.Bets[Ante] == 0 || Needed(m.Bets) > m.Bank.Credits || !m.Bank.Take(m.Total()) {
+	if !m.CanDeal() || !m.Bank.Take(m.Total()) {
 		return false
 	}
 	m.stir()
