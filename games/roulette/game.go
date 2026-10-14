@@ -759,7 +759,7 @@ func (g *Game) drawTable(screen *ebiten.Image) {
 			continue
 		}
 		x, y := chipAt(spotPoint[spot])
-		drawChip(screen, x, y, bet, flash && g.ticks/15%2 == 0)
+		ui.DrawChip(screen, x, y, bet, wheel.ChipChoices, flash && g.ticks/15%2 == 0)
 	}
 
 	if onSpot && !g.spinning {
@@ -767,36 +767,9 @@ func (g *Game) drawTable(screen *ebiten.Image) {
 			ui.FrameRect(screen, b.X+1, b.Y+1, b.W-2, b.H-2, 2, ui.White)
 		} else {
 			x, y := chipAt(g.mark)
-			ui.FrameCircle(screen, x, y, chipR+3, 2, ui.White)
+			ui.FrameCircle(screen, x, y, ui.ChipR+3, 2, ui.White)
 		}
 	}
-}
-
-// The size of a chip on the table, and the colour of each chip.
-const chipR = 11
-
-var chipInks = []color.Color{ui.LightBlue, ui.LightRed, ui.Green, ui.Magenta, ui.Gold}
-
-// drawChip draws what is bet on a spot as one chip, in the colour of the
-// largest chip that makes part of it and with the amount on it.
-func drawChip(dst *ebiten.Image, x, y float64, amount int, lit bool) {
-	ink := chipInks[0]
-	for i, n := range wheel.ChipChoices {
-		if amount >= n {
-			ink = chipInks[i]
-		}
-	}
-	rim, text := color.Color(ui.White), color.Color(ui.White)
-	if lit {
-		rim = ui.Yellow
-	}
-	if ink == ui.Gold {
-		text = ui.Black
-	}
-	ui.FillCircle(dst, x, y, chipR, ui.Black)
-	ui.FillCircle(dst, x, y, chipR-1, rim)
-	ui.FillCircle(dst, x, y, chipR-3, ink)
-	ui.DrawText(dst, fmt.Sprint(amount), x, y, 8, text, ui.AlignCenter, ui.AlignCenter)
 }
 
 // The wheel, from the outside in.

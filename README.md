@@ -6,6 +6,7 @@ and they are all played from one balance of credits.
 
 | Game | What it is |
 |---|---|
+| Baccarat | The player's hand against the banker's from eight decks, with no commission and bets on a tie or a pair |
 | Blackjack | Six decks dealt down to a cut card, with doubling, splitting and the Perfect Pairs side bet |
 | Roulette | A wheel with a single zero and the full table to bet on, from single numbers to red or black |
 | Slot Machine | A five-reel slot machine in the style of modern hold-and-respin poker machines, with free games, a link feature and four jackpots |
@@ -94,16 +95,85 @@ Everything is saved after every change, so you can close the program at any
 time and carry on later with the same credits, the same bet in each game,
 and anything left unfinished: a hand that has been dealt but not played
 out, free games still to play, or a link feature part-way through. The
-Blackjack shoe is kept as it stands, as are the chips on the Roulette table
-and whether the sound is on.
+Blackjack and Baccarat shoes are kept as they stand, as are the chips on
+the Baccarat and Roulette tables and whether the sound is on.
 
 The save is one small file, `save.json`, in the folder the program is in.
 Delete it to start again from scratch, jackpot pots included.
 
 Nothing in the save tells you a card before it is dealt. The cards drawn in
-Video Poker are chosen only at the draw. The Blackjack shoe is kept as how
-many of each card are left, not as cards in an order, and the dealer has no
-hidden card.
+Video Poker are chosen only at the draw. The Blackjack and Baccarat shoes are
+kept as how many of each card are left, not as cards in an order. The
+Blackjack dealer has no hidden card, and a hand of Baccarat is dealt and
+settled all at once.
+
+## Baccarat
+
+Two hands are dealt, the player's and the banker's. You play neither: you
+bet on which will win, on a tie, or on either hand starting with a pair,
+then press DEAL.
+
+An ace counts 1, a two to a nine its number, and a ten or a picture nothing.
+Only the last figure of a hand counts, so a seven and an eight make 5. The
+hand nearer 9 wins.
+
+Each hand is dealt two cards. If either makes 8 or 9, a natural, the hand
+ends there. If not, each may be dealt a third card by fixed rules, the same
+at every table: nobody chooses.
+
+- The player's hand draws on 0 to 5 and stands on 6 or 7.
+- If the player stood, the banker's hand does the same.
+- If the player drew, the banker's hand draws on 0 to 2; on 3 unless the
+  player's third card was an 8; on 4 if it was 2 to 7; on 5 if it was 4 to
+  7; on 6 if it was 6 or 7; and stands on 7.
+
+| Bet | Wins when | Pays |
+|---|---|---|
+| PLAYER | The player's hand wins | 1 to 1 |
+| BANKER | The banker's hand wins | 1 to 1, but half on a winning 6 |
+| TIE | The hands count the same | 8 to 1 |
+| PLAYER PAIR | The player's first two cards are of one rank | 11 to 1 |
+| BANKER PAIR | The banker's first two cards are of one rank | 11 to 1 |
+
+This is the "no commission" game: a win on the banker is paid in full, with
+nothing taken from it, except when the banker wins with a 6. On a tie, bets
+on the two hands are handed back.
+
+The chips are 10, 50, 100, 500 and 1000 credits, and one bet can hold up to
+5,000. You can bet on several things at once. Chips on the table are paid
+for when the hand is dealt, and no more can be put down than the bank holds.
+After a hand the table is cleared, with the winning chips left on show until
+you bet again. REBET puts the last bets back, and DEAL with nothing on the
+table makes them again and deals.
+
+With the mouse, click a bet to put a chip on it and right click to take it
+off. The keyboard works too, with a marker on the bet you are at:
+
+| Key | Action |
+|---|---|
+| Space | Deal |
+| Left / Right | Move the marker from bet to bet |
+| Enter | Put a chip where the marker is |
+| Backspace | Take a chip off there |
+| 1 to 5 | Choose a chip |
+| X | Clear the table |
+| B | Make the last bets again |
+| C | Insert a coin |
+| R | Reset your credits |
+| S | Sound on or off |
+| Esc | Back to the menu |
+
+### The shoe
+
+The game is dealt from eight decks, and the shoe is drawn in the corner of
+the table as Blackjack's is. After each shuffle the first card is turned up
+and as many cards burnt as it counts, ten for a ten or a picture: they are
+dealt face down beside it, one at a time, before the first hand.
+
+The cut card stands 14 cards from the end of the shoe. When it comes out it
+is dealt onto the table as a plain yellow card, the hand is finished, and
+one hand more is dealt. The shoe is then shuffled, which is shown as it is
+in Blackjack. The row of last hands starts afresh with each shoe.
 
 ## Blackjack
 
@@ -450,6 +520,7 @@ check them against a great many hands and spins played out. Run the tests
 to recalculate them after changing a paytable or the rules:
 
 ```
+go test -v ./games/baccarat/table/
 go test -v ./games/blackjack/table/
 go test -v ./games/roulette/wheel/
 go test -v ./games/slot/machine/
@@ -458,9 +529,25 @@ go test -v ./games/videopoker/poker/
 
 Every card and every spin is drawn from a cryptographic random number
 generator seeded by the operating system, and seeded afresh every hundred
-hands or spins. No spin of the Slot Machine or the Roulette wheel and no hand of Video
-Poker depends on the ones before it. Blackjack is the exception by design: its
-hands come from one shoe until it is shuffled.
+hands or spins. No spin of the Slot Machine or the Roulette wheel and no hand
+of Video Poker depends on the ones before it. Blackjack and Baccarat are
+the exceptions by design: their hands come from one shoe until it is
+shuffled.
+
+### Baccarat
+
+There is nothing to play well or badly, so what a bet pays back depends
+only on the cards. From a full shoe of eight decks:
+
+| Bet | How often it wins | Pays back |
+|---|---|---|
+| PLAYER | 44.62% of hands | 98.76% |
+| BANKER | 45.86% of hands, 5.39% of them with a 6 | 98.54% |
+| TIE | 9.52% of hands | 85.64% |
+| Either PAIR | 31 times in 415 | 89.64% |
+
+They are worked out by following every way a hand can come out of the shoe,
+and move a little from hand to hand as the shoe runs down.
 
 ### Blackjack
 
@@ -537,6 +624,10 @@ perfect play, which auto hold gives you; holding by feel pays back less.
 - `cards/` holds the card, rank and suit types that card games share.
 - `ui/` has the palette, text, shapes, buttons, menus, card drawing and
   sound that every game uses.
+- `shoe/` holds the shoe that Blackjack and Baccarat are dealt from.
+- `shuffle/` shows a shoe being shuffled, for any game that has one.
+- `games/baccarat/` has Baccarat's screens, with its rules in
+  `games/baccarat/table/`.
 - `games/blackjack/` has Blackjack's screens, with its rules in
   `games/blackjack/table/`.
 - `games/roulette/` has Roulette's screens, with its rules in
@@ -546,7 +637,7 @@ perfect play, which auto hold gives you; holding by feel pays back less.
 - `games/videopoker/` has Video Poker's screens, with its rules in
   `games/videopoker/poker/`.
 
-The rules packages, `bank/` and `cards/` have no graphics and are covered
+The rules packages, `bank/`, `cards/` and `shoe/` have no graphics and are covered
 by tests. The art is drawn from simple shapes and the sound is generated,
 so there are no asset files.
 

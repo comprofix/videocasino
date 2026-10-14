@@ -363,7 +363,7 @@ func (o *Odds) Advise(up cards.Card, hand []cards.Card) Advice {
 // the table have already come out of it.
 func (m *Machine) shoe() shoe {
 	var s shoe
-	for c, k := range m.Shoe {
+	for c, k := range m.Left {
 		s.left[Value(cards.Card(c))] += k
 		s.n += k
 	}

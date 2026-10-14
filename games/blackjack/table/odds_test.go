@@ -317,10 +317,10 @@ func TestBestPlayFollowsShoe(t *testing.T) {
 	}
 
 	// Take every ace, two, three, four and five out of the shoe.
-	for c := range m.Shoe {
+	for c := range m.Left {
 		if v := Value(cards.Card(c)); v <= 5 {
-			m.ToCut -= m.Shoe[c]
-			m.Shoe[c] = 0
+			m.ToCut -= m.Left[c]
+			m.Left[c] = 0
 		}
 	}
 	a, _ := BestPlay(m)
