@@ -299,12 +299,12 @@ func TestCutCardAndShuffle(t *testing.T) {
 	for g.shuffling {
 		g.ticks++
 		g.shuffleStep(false)
-		if n++; n > shuffle.Ticks+1 {
+		if n++; n > shuffle.Full.Ticks()+1 {
 			t.Fatal("the shuffle never ended")
 		}
 	}
-	if n != shuffle.Ticks {
-		t.Errorf("the shuffle took %d ticks, want %d", n, shuffle.Ticks)
+	if n != shuffle.Full.Ticks() {
+		t.Errorf("the shuffle took %d ticks, want %d", n, shuffle.Full.Ticks())
 	}
 	if !g.revealing || g.result.Burnt == 0 || g.cutShown || g.m.Finished || g.m.CardsLeft() < table.ShoeSize-17 {
 		t.Errorf("after the shuffle: revealing %v, burnt %d, cut card shown %v, %d cards", g.revealing, g.result.Burnt, g.cutShown, g.m.CardsLeft())

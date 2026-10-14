@@ -306,12 +306,12 @@ func (g *Game) pressDeal() {
 // is over or has been cut short.
 func (g *Game) shuffleStep(skip bool) {
 	t := g.ticks - g.shuffleStart
-	if skip || t >= shuffle.Ticks {
+	if skip || t >= shuffle.Full.Ticks() {
 		g.shuffling = false
 		g.deal()
 		return
 	}
-	if shuffle.Falls(t) {
+	if shuffle.Full.Falls(t) {
 		g.snd.Play(g.riffleSound)
 	}
 }
@@ -710,7 +710,7 @@ func (g *Game) drawPlay(screen *ebiten.Image) {
 
 	// While the shoe is being shuffled the table is clear.
 	if g.shuffling {
-		shuffle.Draw(screen, g.ticks-g.shuffleStart, tableX+tableW/2, (dealerY+playerY+cardH)/2, cardScale)
+		shuffle.Full.Draw(screen, g.ticks-g.shuffleStart, tableX+tableW/2, (dealerY+playerY+cardH)/2, cardScale)
 	} else {
 		g.drawHands(screen)
 	}
@@ -850,7 +850,7 @@ func (g *Game) drawShoe(screen *ebiten.Image) {
 	// During a shuffle the shoe fills up again.
 	full := float64(g.m.CardsLeft()) / table.ShoeSize
 	if g.shuffling {
-		full += (1 - full) * shuffle.Done(g.ticks-g.shuffleStart)
+		full += (1 - full) * shuffle.Full.Done(g.ticks-g.shuffleStart)
 	}
 
 	// The cut card stands that many cards in from the front of what is

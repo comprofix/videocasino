@@ -146,6 +146,49 @@ func TestDealAndPlay(t *testing.T) {
 	}
 }
 
+// TestShuffle checks that DEAL shuffles the deck before the hand is dealt,
+// and that the shuffle can be cut short.
+func TestShuffle(t *testing.T) {
+	g := testGame()
+	g.m.Chip = 100
+	bet(g, table.Ante)
+	g.pressDeal()
+	if !g.shuffling || g.m.Dealt || g.bank.Credits != bank.StartCredits {
+		t.Fatalf("after pressing deal: shuffling %v, dealt %v, %d credits", g.shuffling, g.m.Dealt, g.bank.Credits)
+	}
+	for n := 0; g.shuffling; n++ {
+		if n > shuffleLength.Ticks()+1 {
+			t.Fatal("the shuffle never ended")
+		}
+		g.ticks++
+		g.shuffleStep(false)
+	}
+	if got := g.ticks - g.shuffleStart; got != shuffleLength.Ticks() {
+		t.Errorf("the shuffle took %d ticks, want %d", got, shuffleLength.Ticks())
+	}
+	if !g.m.Dealt || !g.showing {
+		t.Fatalf("after the shuffle: dealt %v, showing %v", g.m.Dealt, g.showing)
+	}
+
+	settle(t, g)
+	g.fold()
+	g.pressDeal() // the last bets again
+	g.ticks++
+	g.shuffleStep(true)
+	if g.shuffling || !g.m.Dealt {
+		t.Error("the shuffle was not cut short")
+	}
+
+	// With no hand to deal there is no shuffle.
+	settle(t, g)
+	g.fold()
+	g.bank.Credits = 0
+	g.pressDeal()
+	if g.shuffling || g.m.Dealt || g.message != outOfCredits {
+		t.Errorf("with no credits: shuffling %v, dealt %v, %q", g.shuffling, g.m.Dealt, g.message)
+	}
+}
+
 // TestFold folds a hand: the ante is lost and the dealer's cards stay face
 // down.
 func TestFold(t *testing.T) {

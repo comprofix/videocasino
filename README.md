@@ -8,6 +8,7 @@ and they are all played from one balance of credits.
 |---|---|
 | Baccarat | The player's hand against the banker's from eight decks, with no commission and bets on a tie or a pair |
 | Blackjack | Six decks dealt down to a cut card, with doubling, splitting and the Perfect Pairs side bet |
+| Caribbean Stud | Five cards against the dealer's five, one of which is face up: fold, or raise and be paid by your hand |
 | Roulette | A wheel with a single zero and the full table to bet on, from single numbers to red or black |
 | Slot Machine | A five-reel slot machine in the style of modern hold-and-respin poker machines, with free games, a link feature and four jackpots |
 | Three Card Poker | A hand of three cards played or folded against the dealer's, with the ante bonus and the Pair Plus side bet |
@@ -113,7 +114,8 @@ Video Poker are chosen only at the draw. The Blackjack and Baccarat shoes are
 kept as how many of each card are left, not as cards in an order. The
 Blackjack dealer has no hidden card, a hand of Baccarat is dealt and
 settled all at once, and the dealer's cards in Three Card Poker are not
-dealt until you play.
+dealt until you play. In Caribbean Stud only the dealer's card that is face
+up is dealt before you raise.
 
 ## Baccarat
 
@@ -283,6 +285,81 @@ dealer and the best play of one depends on every way the other could go. A
 split is weighed up from the cards on the table, as if the other hand were
 to draw no more. That is exact for the second of the two hands once the
 first is finished, and close for the rest.
+
+## Caribbean Stud
+
+You play a hand of five cards against the dealer's five. Put chips on the
+ANTE and press DEAL. The deck is shuffled, you are dealt five cards face up,
+and the dealer is dealt five with the last of them face up. Then either:
+
+- FOLD, and lose the ante; or
+- RAISE, for a second bet of twice the ante, and the dealer's other cards
+  are turned over.
+
+The dealer needs an ace and a king or better to qualify.
+
+| The dealer | Ante | Raise |
+|---|---|---|
+| Does not qualify | Pays 1 to 1 | Handed back |
+| Qualifies, and your hand is better | Pays 1 to 1 | Pays by your hand |
+| Qualifies, and the hands tie | Handed back | Handed back |
+| Qualifies, and has the better hand | Lost | Lost |
+
+Hands rank as in ordinary poker, and an ace is high but also makes the
+lowest straight, ace to five. When you beat a dealer who qualifies, the
+raise pays by your hand:
+
+| Your hand | Raise pays |
+|---|---|
+| Royal flush | 100 to 1 |
+| Straight flush | 50 to 1 |
+| Four of a kind | 20 to 1 |
+| Full house | 7 to 1 |
+| Flush | 5 to 1 |
+| Straight | 4 to 1 |
+| Three of a kind | 3 to 1 |
+| Two pair | 2 to 1 |
+| Pair, or less | 1 to 1 |
+
+There is no progressive jackpot side bet, and no limit on what the raise
+can pay.
+
+The chips are $1, $5, $25, $100 and $1,000, and the ante can hold up to
+$5,000. The bank must hold enough for the raise as well as the ante, so
+that a hand can always be raised. REBET puts the last bet back, and DEAL
+with nothing on the table makes it again and deals.
+
+HINT says whether the hand is better raised or folded, and what raising it
+is worth on average. It is exact: your hand is set against every hand the
+dealer could hold with the card that is showing. As a rule of thumb, raise
+any pair or better and fold anything less than an ace and a king; with an
+ace and a king it depends on the dealer's card.
+
+The keyboard works too. The keys for betting work until a hand is dealt,
+and the keys for playing it after that. R resets your credits here as in
+every game, so raising is P or 1, as playing is in Three Card Poker.
+
+| Key | Action |
+|---|---|
+| Space | Shuffle and deal |
+| Enter | Put a chip on the ante |
+| Backspace | Take a chip off it |
+| 1 to 5 | Choose a chip |
+| X | Clear the table |
+| B | Make the last bet again |
+| P or 1 | Raise |
+| F or 2 | Fold |
+| H | Hint |
+| C | Insert a coin |
+| R | Reset your credits |
+| S | Sound on or off |
+| Esc | Back to the menu |
+
+Each hand is dealt from one deck, shuffled before every hand. The shuffle
+is shown at half the length of Blackjack's, and Space, Enter or a click
+cuts it short. Only the dealer's card that is face up is dealt at first:
+the other four are drawn when you raise, and if you fold they stay face
+down.
 
 ## Roulette
 
@@ -504,7 +581,7 @@ and the keys for playing it after that:
 
 | Key | Action |
 |---|---|
-| Space | Deal |
+| Space | Shuffle and deal |
 | Left / Right | Move the marker between the bets |
 | Enter | Put a chip where the marker is |
 | Backspace | Take a chip off there |
@@ -519,8 +596,9 @@ and the keys for playing it after that:
 | S | Sound on or off |
 | Esc | Back to the menu |
 
-Each hand is dealt from one deck, freshly shuffled. The dealer's cards are
-not dealt until you play: the three lying face down are there for the look,
+Each hand is dealt from one deck, shuffled before every hand. The shuffle
+is shown at half the length of Blackjack's, and Space, Enter or a click
+cuts it short. The dealer's cards are not dealt until you play: the three lying face down are there for the look,
 and if you fold they stay as they are.
 
 ## Video Poker
@@ -602,11 +680,15 @@ to recalculate them after changing a paytable or the rules:
 ```
 go test -v ./games/baccarat/table/
 go test -v ./games/blackjack/table/
+go test -v ./games/caribbean/table/
 go test -v ./games/roulette/wheel/
 go test -v ./games/slot/machine/
 go test -v ./games/threecard/table/
 go test -v ./games/videopoker/poker/
 ```
+
+One calculation, the return of Caribbean Stud, is too slow for every run.
+It is kept apart behind `-long`, as told under Caribbean Stud below.
 
 Every card and every spin is drawn from a cryptographic random number
 generator seeded by the operating system, and seeded afresh every hundred
@@ -651,6 +733,23 @@ shoe, and that too moves as the shoe runs down:
 | Mixed | 12 times in 311 | 27.01% |
 
 A pair of some kind comes up about once in 13.5 hands.
+
+### Caribbean Stud
+
+Played perfectly, the ante and the raise together pay back 97.44% of what
+is bet on them, and the ante loses 5.22% of itself. A hand is worth raising
+52.2% of the time, counting each hand with each card the dealer could show.
+
+This is worked out by setting every hand you could be dealt against every
+card the dealer could show and every hand the dealer could then hold, about
+2 x 10^13 deals. That takes most of a minute, so it is not one of the
+ordinary tests: its totals are kept in the code, and the slow test that
+counts them again, and checks the rule of thumb under HINT, runs only when
+asked:
+
+```
+go test -v ./games/caribbean/table/ -run TestReturn -long -timeout 0
+```
 
 ### Roulette
 
@@ -722,12 +821,17 @@ perfect play, which auto hold gives you; holding by feel pays back less.
 - `cards/` holds the card, rank and suit types that card games share.
 - `ui/` has the palette, text, shapes, buttons, menus, card drawing and
   sound that every game uses.
+- `pokerhand/` ranks hands of five cards, for the poker games played
+  against the dealer.
 - `shoe/` holds the shoe that Blackjack and Baccarat are dealt from.
-- `shuffle/` shows a shoe being shuffled, for any game that has one.
+- `shuffle/` shows cards being shuffled, for any game that shuffles: in
+  full for a shoe, and at half the length for a single deck.
 - `games/baccarat/` has Baccarat's screens, with its rules in
   `games/baccarat/table/`.
 - `games/blackjack/` has Blackjack's screens, with its rules in
   `games/blackjack/table/`.
+- `games/caribbean/` has Caribbean Stud's screens, with its rules in
+  `games/caribbean/table/`.
 - `games/roulette/` has Roulette's screens, with its rules in
   `games/roulette/wheel/`.
 - `games/slot/` has the Slot Machine's screens, with its rules in
@@ -737,8 +841,8 @@ perfect play, which auto hold gives you; holding by feel pays back less.
 - `games/videopoker/` has Video Poker's screens, with its rules in
   `games/videopoker/poker/`.
 
-The rules packages, `bank/`, `cards/` and `shoe/` have no graphics and are covered
-by tests. The art is drawn from simple shapes and the sound is generated,
+The rules packages, `bank/`, `cards/`, `pokerhand/` and `shoe/` have no
+graphics and are covered by tests. The art is drawn from simple shapes and the sound is generated,
 so there are no asset files.
 
 ## Licence

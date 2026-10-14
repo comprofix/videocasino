@@ -15,6 +15,7 @@ import (
 	"videocasino/bank"
 	"videocasino/games/baccarat"
 	"videocasino/games/blackjack"
+	"videocasino/games/caribbean"
 	"videocasino/games/roulette"
 	"videocasino/games/slot"
 	"videocasino/games/threecard"
@@ -99,6 +100,7 @@ func newApp() *App {
 		{title: "SLOT MACHINE", game: slot.New(a.bank, a.snd)},
 		{title: "ROULETTE", game: roulette.New(a.bank, a.snd)},
 		{title: "THREE CARD POKER", game: threecard.New(a.bank, a.snd)},
+		{title: "CARIBBEAN STUD", game: caribbean.New(a.bank, a.snd)},
 	}
 	slices.SortFunc(a.entries, func(x, y entry) int { return strings.Compare(x.title, y.title) })
 
