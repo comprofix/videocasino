@@ -29,7 +29,7 @@ func deck(s string) []cards.Card {
 func stacked(bet, side int, next string) *Machine {
 	m := New(bank.New(), 1, 2)
 	m.Bet, m.SideBet = bet, side
-	m.next = deck(next)
+	m.Stack(deck(next)...)
 	return m
 }
 
@@ -40,8 +40,8 @@ func settled(t *testing.T, m *Machine, paid int, outcomes ...Outcome) {
 	if m.Dealt {
 		t.Fatalf("the hand is still to be played: %+v", m.Hands)
 	}
-	if len(m.next) != 0 {
-		t.Errorf("%d of the cards stacked were not dealt", len(m.next))
+	if m.Stacked() != 0 {
+		t.Errorf("%d of the cards stacked were not dealt", m.Stacked())
 	}
 	if m.Last.Paid != paid || !slices.Equal(m.Last.Outcomes, outcomes) {
 		t.Errorf("paid %d for %v, want %d for %v (dealer %v, hands %+v)",
@@ -582,7 +582,7 @@ func TestShoe(t *testing.T) {
 					m.Shuffled, left, m.CardsLeft(), toCut, m.ToCut, dealt)
 			}
 		}
-		for c, k := range m.Shoe {
+		for c, k := range m.Left {
 			if k < 0 || k > Decks {
 				t.Fatalf("%d of %v left in the shoe", k, cards.Card(c))
 			}

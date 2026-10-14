@@ -8,6 +8,7 @@ import (
 
 	"videocasino/bank"
 	"videocasino/games/blackjack/table"
+	"videocasino/shuffle"
 	"videocasino/ui"
 )
 
@@ -275,9 +276,9 @@ func TestCutCard(t *testing.T) {
 	inPlay(t, g)
 	// Deal the shoe down to the cut card, so the save is one play could
 	// have left.
-	for c := range g.m.Shoe {
-		for g.m.ToCut > 0 && g.m.Shoe[c] > 0 {
-			g.m.Shoe[c]--
+	for c := range g.m.Left {
+		for g.m.ToCut > 0 && g.m.Left[c] > 0 {
+			g.m.Left[c]--
 			g.m.ToCut--
 		}
 	}
@@ -307,14 +308,14 @@ func TestShuffle(t *testing.T) {
 		t.Fatalf("after pressing deal: shuffling %v, dealt %v, %d cards left of %d", g.shuffling, g.m.Dealt, g.m.CardsLeft(), left)
 	}
 	for n := 0; g.shuffling; n++ {
-		if n > shuffleTicks+1 {
+		if n > shuffle.Ticks+1 {
 			t.Fatal("the shuffle never ended")
 		}
 		g.ticks++
 		g.shuffleStep(false)
 	}
-	if g.ticks-g.shuffleStart != shuffleTicks {
-		t.Errorf("the shuffle took %d ticks, want %d", g.ticks-g.shuffleStart, shuffleTicks)
+	if g.ticks-g.shuffleStart != shuffle.Ticks {
+		t.Errorf("the shuffle took %d ticks, want %d", g.ticks-g.shuffleStart, shuffle.Ticks)
 	}
 	// The hand has been dealt from a new shoe, with the cut card back in it.
 	if !g.m.Dealt && !g.revealing {

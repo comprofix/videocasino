@@ -14,6 +14,7 @@ import (
 	"videocasino/bank"
 	"videocasino/cards"
 	"videocasino/games/blackjack/table"
+	"videocasino/shuffle"
 	"videocasino/ui"
 )
 
@@ -130,7 +131,7 @@ func New(b *bank.Bank, snd *ui.Sounds) *Game {
 	g.message = "CHOOSE YOUR BET AND PRESS DEAL"
 
 	g.cutSound = append(ui.Tone(880, 60, 0.2, true), ui.Tone(660, 110, 0.2, true)...)
-	g.riffleSound = ui.Tone(165, 28, 0.12, true)
+	g.riffleSound = shuffle.Sound()
 
 	var s table.Saved
 	if b.Load(saveName, &s) {
@@ -286,16 +287,6 @@ func (g *Game) updatePlay() {
 	}
 }
 
-// How the shuffle goes: so many riffles, each of so many ticks, with a card
-// falling every few ticks while the two halves run together.
-const (
-	riffles      = 4
-	riffleTicks  = 40
-	shuffleTicks = riffles * riffleTicks
-	riffleCards  = 8   // cards that fall in a riffle, from each half in turn
-	riffleFall   = 0.6 // the part of a riffle the cards fall for
-)
-
 // pressDeal deals the next hand. If the cut card has come out the shoe is
 // shuffled first, and that is shown before the cards are dealt. With too
 // few credits for the hand there is no shuffle to show: nothing is dealt.
@@ -315,14 +306,12 @@ func (g *Game) pressDeal() {
 // is over or has been cut short.
 func (g *Game) shuffleStep(skip bool) {
 	t := g.ticks - g.shuffleStart
-	if skip || t >= shuffleTicks {
+	if skip || t >= shuffle.Ticks {
 		g.shuffling = false
 		g.deal()
 		return
 	}
-	// A card falls at even steps through the first part of each riffle.
-	fall := int(riffleTicks * riffleFall)
-	if at := t % riffleTicks; at < fall && at%(fall/riffleCards) == 0 {
+	if shuffle.Falls(t) {
 		g.snd.Play(g.riffleSound)
 	}
 }
@@ -721,7 +710,7 @@ func (g *Game) drawPlay(screen *ebiten.Image) {
 
 	// While the shoe is being shuffled the table is clear.
 	if g.shuffling {
-		g.drawShuffle(screen)
+		shuffle.Draw(screen, g.ticks-g.shuffleStart, tableX+tableW/2, (dealerY+playerY+cardH)/2, cardScale)
 	} else {
 		g.drawHands(screen)
 	}
@@ -855,51 +844,36 @@ func drawStat(screen *ebiten.Image, label string, value, column int, c color.Col
 // empties from the front as they are dealt, with the cut card standing in
 // it where it was put. It shows how far through the shoe is, not a count.
 func (g *Game) drawShoe(screen *ebiten.Image) {
-	const (
-		w, h = 150, 26
-		x    = tableX + tableW - w
-		y    = dealerY + 6
-	)
-	ui.DrawText(screen, "SHOE", x+w/2, y-17, 11, ui.LightGray, ui.AlignCenter, ui.AlignStart)
-	ui.FillRect(screen, x, y, w, h, ui.Black)
+	const w, h = 150, 26
+	box := ui.Button{X: tableX + tableW - w, Y: dealerY + 6, W: w, H: h}
 
-	// The cards are dealt from the left, so those left fill the right.
 	// During a shuffle the shoe fills up again.
-	cardsLeft := float64(g.m.CardsLeft())
+	full := float64(g.m.CardsLeft()) / table.ShoeSize
 	if g.shuffling {
-		done := float64(g.ticks-g.shuffleStart) / shuffleTicks
-		cardsLeft = float64(g.shuffleFrom) + (table.ShoeSize-float64(g.shuffleFrom))*done
+		full += (1 - full) * shuffle.Done(g.ticks-g.shuffleStart)
 	}
-	per := float64(w-4) / float64(table.ShoeSize)
-	left := cardsLeft * per
-	ui.FillRect(screen, x+w-2-left, y+2, left, h-4, ui.LightGray)
 
 	// The cut card stands that many cards in from the front of what is
 	// left. Once it has come out it is gone from the shoe.
 	note, ink := "", color.Color(ui.LightGray)
+	cut := -1.0
 	switch {
 	case g.shuffling:
 		note, ink = "SHUFFLING", ui.Yellow
 	case g.m.CutOut():
 		note, ink = "CUT CARD OUT: SHUFFLE NEXT", ui.Yellow
-	case g.m.Shuffled && len(g.m.Hands) > 0:
-		note = "NEW SHOE"
+	default:
+		cut = float64(g.m.ToCut) / table.ShoeSize
+		if g.m.Shuffled && len(g.m.Hands) > 0 {
+			note = "NEW SHOE"
+		}
 	}
-	if !g.m.CutOut() && !g.shuffling {
-		cut := x + w - 2 - left + float64(g.m.ToCut)*per
-		ui.FillRect(screen, cut-1, y-3, 3, h+6, ui.Yellow)
-	}
-	ui.FrameRect(screen, x, y, w, h, 2, ui.Brown)
-	ui.DrawText(screen, note, x+w/2, y+h+6, 10, ink, ui.AlignCenter, ui.AlignStart)
+	ui.DrawShoe(screen, box, full, cut, ui.Brown, note, ink)
 
 	// The cut card itself, once it has come out: a plain yellow card dealt
 	// onto the table beside the shoe, where it lies until the shuffle.
 	if g.cutShown && !g.shuffling {
-		const cw, ch = ui.CardW * cutScale, ui.CardH * cutScale
-		cx, cy := float64(x+w/2-cw/2), float64(y+h+22)
-		ui.FillRoundRect(screen, cx, cy, cw, ch, 10*cutScale, ui.DarkGray)
-		ui.FillRoundRect(screen, cx+1.5, cy+1.5, cw-3, ch-3, 9*cutScale, ui.Yellow)
-		ui.DrawText(screen, "CUT", cx+cw/2, cy+ch/2, 15, ui.Black, ui.AlignCenter, ui.AlignCenter)
+		ui.DrawCutCard(screen, box.X+box.W/2-ui.CardW*cutScale/2, box.Y+box.H+22, cutScale)
 	}
 }
 
@@ -970,61 +944,3 @@ func (g *Game) drawHands(screen *ebiten.Image) {
 // cutScale is the size of the cut card: a little smaller than the cards in
 // the hands, as it is not one of them.
 const cutScale = 0.5
-
-// drawShuffle draws the shoe being shuffled in the middle of the table: a
-// riffle, done several times over. The cards lie in two halves, and fall
-// from each in turn onto a pile between them, turning as they go. The pile
-// is then cut in two again for the next riffle.
-func (g *Game) drawShuffle(screen *ebiten.Image) {
-	const (
-		centreX = tableX + tableW/2
-		centreY = (dealerY + playerY + cardH) / 2
-		apart   = 120 // how far each half lies from the middle
-		lift    = 26  // how high a card rises as it falls across
-		turn    = 0.7 // how far a card is turned as it leaves its half
-	)
-	t := g.ticks - g.shuffleStart
-	riffle := min(t/riffleTicks, riffles-1)
-	at := float64(t-riffle*riffleTicks) / riffleTicks // how far through this riffle
-
-	// pile draws a few cards lying squared up, with their middle at x.
-	pile := func(x float64, n int) {
-		for i := range n {
-			ui.DrawCardBackTurned(screen, x-float64(i), centreY-float64(i), cardScale, 0)
-		}
-	}
-
-	// After the cards have fallen the pile is cut and the halves drawn
-	// apart, ready for the next riffle. The last riffle leaves it whole.
-	if at >= riffleFall {
-		out := 0.0
-		if riffle < riffles-1 {
-			out = (at - riffleFall) / (1 - riffleFall) * apart
-		}
-		pile(centreX-out, 3)
-		pile(centreX+out, 3)
-		return
-	}
-
-	// The halves, the pile between them, and the cards on their way: each
-	// sets off a little after the one before, from each half in turn.
-	pile(centreX-apart, 3)
-	pile(centreX+apart, 3)
-	const span = 0.25 // the part of the fall one card takes
-	for i := range riffleCards {
-		start := float64(i) * (riffleFall - riffleFall*span) / (riffleCards - 1)
-		u := (at - start) / (riffleFall * span)
-		if u <= 0 {
-			continue // still in its half
-		}
-		side := float64(1 - 2*(i%2)) // from the right, then the left
-		if u >= 1 {
-			// Landed: it lies on the pile, a little off square.
-			ui.DrawCardBackTurned(screen, centreX, centreY-float64(i), cardScale, side*0.04)
-			continue
-		}
-		x := centreX + side*apart*(1-u)
-		y := centreY - float64(i) - lift*4*u*(1-u)
-		ui.DrawCardBackTurned(screen, x, y, cardScale, side*turn*(1-u))
-	}
-}

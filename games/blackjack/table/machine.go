@@ -7,6 +7,10 @@ import (
 
 	"videocasino/bank"
 	"videocasino/cards"
+
+	// The odds have a shoe of their own, counted by value, so the package
+	// goes by another name here.
+	cardshoe "videocasino/shoe"
 )
 
 // BetChoices is the bets a player can choose from. They are all even, so
@@ -89,23 +93,14 @@ type Machine struct {
 	// Last is how the hand last played was settled.
 	Last Result
 
-	// Shoe is how many of each card are left to be dealt. Hands are dealt
-	// from it one after another, so a card that has been played stays out
-	// until the next shuffle. The cards are not kept in any order: each is
-	// drawn at random from what is left, which comes to the same thing as
-	// dealing from a shuffled shoe and leaves no card waiting to be learnt.
+	// The shoe the hands are dealt from, one after another, so a card that
+	// has been played stays out until the next shuffle.
 	//
-	// ToCut is how many more cards are to be dealt before the cut card
-	// comes out. Once it has, the hand being played is finished and the
-	// shoe is shuffled before the next. Shuffled is set while the hand on
-	// the table is the first from a fresh shoe.
-	Shoe     [cards.DeckSize]int
-	ToCut    int
+	// Once the cut card has come out, the hand being played is finished and
+	// the shoe is shuffled before the next. Shuffled is set while the hand
+	// on the table is the first from a fresh shoe.
+	cardshoe.Shoe
 	Shuffled bool
-
-	// next is cards to be dealt before any are drawn from the shoe. Only
-	// the tests use it.
-	next []cards.Card
 
 	// Every card is drawn from rng, which reads from src. reseedIn counts
 	// the hands until src is seeded afresh; it stays at zero for a machine
@@ -142,6 +137,7 @@ func newMachine(b *bank.Bank, seed [32]byte) *Machine {
 	m := &Machine{
 		Bank: b,
 		Bet:  BetChoices[0],
+		Shoe: cardshoe.New(Decks),
 		src:  src,
 		rng:  rand.New(src),
 	}
@@ -158,25 +154,7 @@ const (
 
 // shuffle fills the shoe again and puts the cut card in.
 func (m *Machine) shuffle() {
-	for c := range m.Shoe {
-		m.Shoe[c] = Decks
-	}
-	m.ToCut = cutMin + m.rng.IntN(cutMax-cutMin+1)
-}
-
-// CardsLeft is how many cards are left in the shoe.
-func (m *Machine) CardsLeft() int {
-	n := 0
-	for _, k := range m.Shoe {
-		n += k
-	}
-	return n
-}
-
-// CutOut reports whether the cut card has come out, so that the shoe is to
-// be shuffled before the next hand.
-func (m *Machine) CutOut() bool {
-	return m.ToCut <= 0
+	m.Fill(cutMin + m.rng.IntN(cutMax-cutMin+1))
 }
 
 // freshSeed asks the operating system for a seed.
@@ -201,24 +179,7 @@ func (m *Machine) stir() {
 // draw takes a card at random from what is left in the shoe. It is chosen
 // only now, so nothing about it can be learnt beforehand.
 func (m *Machine) draw() cards.Card {
-	m.ToCut--
-	if len(m.next) > 0 {
-		c := m.next[0]
-		m.next = m.next[1:]
-		if m.Shoe[c] > 0 {
-			m.Shoe[c]--
-		}
-		return c
-	}
-	i := m.rng.IntN(m.CardsLeft())
-	for c, k := range m.Shoe {
-		if i < k {
-			m.Shoe[c]--
-			return cards.Card(c)
-		}
-		i -= k
-	}
-	panic("table: the shoe is empty")
+	return m.Draw(m.rng)
 }
 
 // hand returns the hand being played, or nil if there is none.

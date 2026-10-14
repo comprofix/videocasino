@@ -13,6 +13,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 
 	"videocasino/bank"
+	"videocasino/games/baccarat"
 	"videocasino/games/blackjack"
 	"videocasino/games/roulette"
 	"videocasino/games/slot"
@@ -93,6 +94,7 @@ func newApp() *App {
 	a.entries = []entry{
 		{title: "VIDEO POKER", game: videopoker.New(a.bank, a.snd)},
 		{title: "BLACKJACK", game: blackjack.New(a.bank, a.snd)},
+		{title: "BACCARAT", game: baccarat.New(a.bank, a.snd)},
 		{title: "SLOT MACHINE", game: slot.New(a.bank, a.snd)},
 		{title: "ROULETTE", game: roulette.New(a.bank, a.snd)},
 	}

@@ -44,7 +44,7 @@ func TestSaveRestore(t *testing.T) {
 	other.Restore(s)
 
 	// The hand can be played out where it was left.
-	other.next = deck("Tc 2h Kd 9s")
+	other.Stack(deck("Tc 2h Kd 9s")...)
 	other.Hit()   // 21 on the first hand
 	other.Stand() // 10 on the second, and the dealer goes bust
 	if other.Dealt || other.Last.Paid != 200 {
@@ -59,8 +59,8 @@ func TestSaveRestore(t *testing.T) {
 	if got.Dealt || got.Bet != 100 || got.SideBet != 25 || len(got.Hands) != 0 || len(got.Dealer) != 0 || got.Stake != 0 {
 		t.Errorf("saved %+v after the hand, want only the bets and the shoe", got)
 	}
-	if got.Shoe != m.Shoe || got.ToCut != m.ToCut {
-		t.Errorf("saved a shoe of %v cut at %d, want %v cut at %d", got.Shoe, got.ToCut, m.Shoe, m.ToCut)
+	if got.Shoe != m.Left || got.ToCut != m.ToCut {
+		t.Errorf("saved a shoe of %v cut at %d, want %v cut at %d", got.Shoe, got.ToCut, m.Left, m.ToCut)
 	}
 }
 
@@ -150,8 +150,8 @@ func TestRestoreShoe(t *testing.T) {
 		if !m.Dealt || len(m.Hands) != 2 {
 			t.Errorf("%s: the hand was thrown away with the shoe", tt.name)
 		}
-		if left := m.CardsLeft(); left != ShoeSize-4 || m.Shoe[eight] != Decks-1 {
-			t.Errorf("%s: %d cards left with %d eights of spades, want %d and %d", tt.name, left, m.Shoe[eight], ShoeSize-4, Decks-1)
+		if left := m.CardsLeft(); left != ShoeSize-4 || m.Left[eight] != Decks-1 {
+			t.Errorf("%s: %d cards left with %d eights of spades, want %d and %d", tt.name, left, m.Left[eight], ShoeSize-4, Decks-1)
 		}
 		if cut := m.ToCut + 4; cut < cutMin || cut > cutMax {
 			t.Errorf("%s: the cut card was put %d cards in", tt.name, cut)
@@ -164,7 +164,7 @@ func TestRestoreShoe(t *testing.T) {
 	// A shoe well run down is kept as it is.
 	m := New(bank.New(), 1, 2)
 	m.Restore(good)
-	if m.Shoe != good.Shoe || m.ToCut != good.ToCut {
+	if m.Left != good.Shoe || m.ToCut != good.ToCut {
 		t.Errorf("a good shoe was not kept")
 	}
 }

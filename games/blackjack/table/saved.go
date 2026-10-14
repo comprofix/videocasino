@@ -43,7 +43,7 @@ func copyHands(hands []Hand) []Hand {
 // Save returns the game as it stands, for keeping. Only a hand still to be
 // played out is kept: one that has been settled is over.
 func (m *Machine) Save() Saved {
-	s := Saved{Bet: m.Bet, SideBet: m.SideBet, Shoe: m.Shoe, ToCut: m.ToCut}
+	s := Saved{Bet: m.Bet, SideBet: m.SideBet, Shoe: m.Left, ToCut: m.ToCut}
 	if m.Dealt {
 		s.Dealt = true
 		s.Shuffled = m.Shuffled
@@ -95,12 +95,12 @@ func (m *Machine) Restore(s Saved) {
 		}
 	}
 	if validShoe(s, table) {
-		m.Shoe, m.ToCut = s.Shoe, s.ToCut
+		m.Left, m.ToCut = s.Shoe, s.ToCut
 		return
 	}
 	m.shuffle()
 	for c, k := range table {
-		m.Shoe[c] -= k
+		m.Left[c] -= k
 		m.ToCut -= k
 	}
 }
