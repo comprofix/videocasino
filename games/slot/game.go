@@ -82,6 +82,7 @@ type Game struct {
 	credits  int // credits on display; a win is added once the reels stop
 	win      int
 	message  string
+	confirm  ui.Confirm // asks before the credits are reset
 
 	stopTick  int // when the reels last stopped, to time the win display
 	showLines int // ticks left to show the lines being played
@@ -219,6 +220,13 @@ func (g *Game) Update() (leave bool) {
 		}
 
 	case scenePlay:
+		// While the player is asked about a reset, nothing else moves.
+		if g.confirm.Open {
+			if g.confirm.Update() {
+				g.reset()
+			}
+			break
+		}
 		g.updatePlay()
 	}
 	return false
@@ -313,7 +321,7 @@ func (g *Game) updatePlay() {
 			g.spin()
 		}
 		if resetButton.Hit(x, y) {
-			g.reset()
+			g.askReset()
 		}
 	}
 
@@ -329,7 +337,7 @@ func (g *Game) updatePlay() {
 	case ui.Pressed(ebiten.KeyArrowLeft):
 		g.setLines(ui.Step(machine.LineChoices, g.m.Lines, -1))
 	case ui.Pressed(ebiten.KeyR):
-		g.reset()
+		g.askReset()
 	case ui.Pressed(ebiten.KeyM):
 		g.maxBet()
 	case ui.Pressed(ebiten.KeySpace, ebiten.KeyEnter, ebiten.KeyNumpadEnter):
@@ -367,6 +375,11 @@ func (g *Game) maxBet() {
 }
 
 const outOfCredits = "OUT OF CREDITS - INSERT A COIN OR RESET"
+
+// askReset asks the player to make sure before the credits are reset.
+func (g *Game) askReset() {
+	g.confirm.Ask("RESET CREDITS TO "+bank.Money(bank.StartCredits)+"?", "YOU HAVE "+bank.Dollars(g.bank.Credits))
+}
 
 // reset puts the bank's credits back to the starting amount. The bet and
 // the jackpot pots are left as they are.
@@ -565,6 +578,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		g.drawAbout(screen)
 	case scenePlay:
 		g.drawPlay(screen)
+		g.confirm.Draw(screen)
 	}
 }
 

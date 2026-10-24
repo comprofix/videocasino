@@ -133,6 +133,7 @@ type Game struct {
 	credits int // credits on display; a win is added once the cards are shown
 	win     int
 	message string
+	confirm ui.Confirm // asks before the credits are reset
 
 	saveFailed bool
 }
@@ -263,6 +264,13 @@ func (g *Game) Update() (leave bool) {
 		}
 
 	case scenePlay:
+		// While the player is asked about a reset, nothing else moves.
+		if g.confirm.Open {
+			if g.confirm.Update() {
+				g.reset()
+			}
+			break
+		}
 		g.updatePlay()
 	}
 	return false
@@ -318,7 +326,7 @@ func (g *Game) updatePlay() {
 		g.insertCoin()
 		return
 	case hit(resetButton), ui.Pressed(ebiten.KeyR):
-		g.reset()
+		g.askReset()
 		return
 	}
 
@@ -464,6 +472,11 @@ func (g *Game) rebet() {
 	g.message = "THE SAME BETS AGAIN - PRESS DEAL"
 	g.snd.Play(g.chipSound)
 	g.save()
+}
+
+// askReset asks the player to make sure before the credits are reset.
+func (g *Game) askReset() {
+	g.confirm.Ask("RESET CREDITS TO "+bank.Money(bank.StartCredits)+"?", "YOU HAVE "+bank.Dollars(g.bank.Credits))
 }
 
 // reset puts the bank's credits back to the starting amount. The bets and
@@ -748,6 +761,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		g.drawAbout(screen)
 	case scenePlay:
 		g.drawPlay(screen)
+		g.confirm.Draw(screen)
 	}
 }
 

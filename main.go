@@ -78,6 +78,7 @@ type App struct {
 
 	message    string
 	saveFailed bool
+	confirm    ui.Confirm // asks before the credits are reset
 
 	byeTicks int
 }
@@ -157,6 +158,14 @@ func (a *App) Update() error {
 }
 
 func (a *App) updateMenu() {
+	// While the player is asked about a reset, nothing else moves.
+	if a.confirm.Open {
+		if a.confirm.Update() {
+			a.reset()
+		}
+		return
+	}
+
 	click := inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft)
 	x, y := ebiten.CursorPosition()
 	hit := func(b ui.Button) bool { return click && b.Hit(x, y) }
@@ -165,7 +174,8 @@ func (a *App) updateMenu() {
 		a.insertCoin()
 	}
 	if ui.Pressed(ebiten.KeyR) || hit(resetButton) {
-		a.reset()
+		a.askReset()
+		return
 	}
 
 	switch chosen := a.menu.Update(); chosen {
@@ -188,6 +198,11 @@ func (a *App) choose(i int) {
 	a.snd.Play(a.snd.Click)
 	a.playing = e.game
 	a.scene = sceneGame
+}
+
+// askReset asks the player to make sure before the credits are reset.
+func (a *App) askReset() {
+	a.confirm.Ask("RESET CREDITS TO "+bank.Money(bank.StartCredits)+"?", "YOU HAVE "+bank.Dollars(a.bank.Credits))
 }
 
 // reset puts the credits back to the starting amount.
@@ -245,6 +260,8 @@ func (a *App) drawMenu(screen *ebiten.Image) {
 	}
 	hint := fmt.Sprintf("ARROWS move    ENTER or NUMBER choose    C coin    R reset    S sound %s    ESC exit", sound)
 	ui.DrawText(screen, hint, ui.ScreenW/2, 550, 11, ui.LightGray, ui.AlignCenter, ui.AlignStart)
+
+	a.confirm.Draw(screen)
 }
 
 func main() {
