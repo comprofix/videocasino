@@ -1,0 +1,23 @@
+# The slow calculations, behind the -long test flag. Run by hand from the
+# Actions tab, after a change to the rules of Caribbean Stud, Ultimate
+# Texas Hold'em or Pai Gow Poker.
+name: Long tests
+
+on:
+  workflow_dispatch:
+
+jobs:
+  long:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      # The rules packages have no graphics, so need no libraries.
+      - name: Caribbean Stud return
+        run: go test ./games/caribbean/table -run TestReturn -long -timeout 0
+      - name: Ultimate Texas Hold'em play before the flop
+        run: go test ./games/holdem/table -run TestPreflop -long -timeout 0
+      - name: Pai Gow Poker estimate
+        run: go test ./games/paigow/table -run TestEstimate -long -timeout 0
