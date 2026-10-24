@@ -1,0 +1,79 @@
+# Builds a release when a version tag such as v1.0.0 is pushed: tests on
+# Linux and Windows, a zip for each, and a GitHub release holding both with
+# notes made from the commits since the last tag.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  linux:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      # Ebitengine needs cgo on Linux, with the X11, GL and sound headers.
+      # Building on an older Ubuntu lets the program run on older systems.
+      - name: Install libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libc6-dev libgl1-mesa-dev libxcursor-dev libxi-dev \
+            libxinerama-dev libxrandr-dev libxxf86vm-dev libasound2-dev pkg-config
+      - run: go vet ./...
+      - run: go test ./...
+      - name: Build
+        run: |
+          mkdir videocasino
+          go build -trimpath -ldflags "-s -w" -o videocasino/videocasino .
+          zip -r "videocasino-${GITHUB_REF_NAME}-linux-amd64.zip" videocasino
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: videocasino-*.zip
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - run: go vet ./...
+      - run: go test ./...
+      # The icon Explorer shows on the exe is linked in from a .syso, made
+      # from the same drawing as the window's icon.
+      - name: Make the exe icon
+        run: |
+          go run ./cmd/winicon videocasino.ico
+          go run github.com/akavel/rsrc@v0.10.2 -arch amd64 -ico videocasino.ico -o rsrc_windows_amd64.syso
+      - name: Build
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory videocasino | Out-Null
+          go build -trimpath -ldflags "-H=windowsgui -s -w" -o videocasino/videocasino.exe .
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Compress-Archive -Path videocasino -DestinationPath "videocasino-$env:GITHUB_REF_NAME-windows-amd64.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: videocasino-*.zip
+
+  release:
+    needs: [linux, windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" videocasino-*.zip \
+            --repo "$GITHUB_REPOSITORY" --title "Video Casino $GITHUB_REF_NAME" --generate-notes
