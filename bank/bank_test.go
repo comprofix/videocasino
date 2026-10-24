@@ -34,14 +34,37 @@ func TestCredits(t *testing.T) {
 		t.Errorf("betting everything left %d credits, want 0", b.Credits)
 	}
 
-	b.InsertCoin()
-	if b.Credits != CoinCredits {
+	if !b.InsertCoin() || b.Credits != CoinCredits {
 		t.Errorf("a coin gave %d credits, want %d", b.Credits, CoinCredits)
 	}
 	b.InsertCoin()
 	b.Reset()
 	if b.Credits != StartCredits {
 		t.Errorf("a reset left %d credits, want %d", b.Credits, StartCredits)
+	}
+}
+
+func TestCoinLimit(t *testing.T) {
+	for _, c := range []struct {
+		had  int
+		took bool
+	}{
+		{0, true},
+		{CoinLimit - CoinCredits, true}, // up to the limit exactly
+		{CoinLimit - CoinCredits + 1, false},
+		{CoinLimit - CoinCredits/2, false}, // a coin is not split
+		{CoinLimit, false},
+		{CoinLimit + CoinCredits, false}, // over it from winning
+	} {
+		b := New()
+		b.Credits = c.had
+		want := c.had
+		if c.took {
+			want += CoinCredits
+		}
+		if took := b.InsertCoin(); took != c.took || b.Credits != want {
+			t.Errorf("a coin into %d credits: taken %v, leaving %d; want %v, %d", c.had, took, b.Credits, c.took, want)
+		}
 	}
 }
 

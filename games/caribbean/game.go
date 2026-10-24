@@ -388,9 +388,12 @@ func (g *Game) reset() {
 }
 
 // insertCoin adds credits to the bank, so play can go on after they run
-// out.
+// out. A coin that would go over the limit is refused.
 func (g *Game) insertCoin() {
-	g.bank.InsertCoin()
+	if !g.bank.InsertCoin() {
+		g.message = "COIN REFUSED - LIMIT IS " + bank.Money(bank.CoinLimit)
+		return
+	}
 	g.credits = g.bank.Credits
 	g.message = fmt.Sprintf("COIN INSERTED - %s ADDED", bank.Money(bank.CoinCredits))
 	g.snd.Play(g.snd.Coin)

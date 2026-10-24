@@ -214,8 +214,12 @@ func (a *App) reset() {
 }
 
 // insertCoin adds credits, so play can go on after they run out.
+// A coin that would go over the limit is refused.
 func (a *App) insertCoin() {
-	a.bank.InsertCoin()
+	if !a.bank.InsertCoin() {
+		a.message = "COIN REFUSED - LIMIT IS " + bank.Money(bank.CoinLimit)
+		return
+	}
 	a.message = fmt.Sprintf("COIN INSERTED - %s ADDED", bank.Money(bank.CoinCredits))
 	a.snd.Play(a.snd.Coin)
 	a.save()

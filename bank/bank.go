@@ -12,6 +12,7 @@ import (
 const (
 	StartCredits = 100_000 // $1,000 at 100 credits to the dollar
 	CoinCredits  = 100_000 // credits added by inserting a coin: $1,000
+	CoinLimit    = 500_000 // no coin is taken that would go over $5,000
 )
 
 // Bank is the one balance every game plays from, with the settings that
@@ -52,9 +53,15 @@ func (b *Bank) Pay(n int) {
 	b.Credits += n
 }
 
-// InsertCoin adds credits, so play can go on after they run out.
-func (b *Bank) InsertCoin() {
+// InsertCoin adds credits, so play can go on after they run out. A coin
+// that would take the credits over CoinLimit is refused and adds nothing;
+// it reports whether the coin was taken. Wins are not limited.
+func (b *Bank) InsertCoin() bool {
+	if b.Credits+CoinCredits > CoinLimit {
+		return false
+	}
 	b.Credits += CoinCredits
+	return true
 }
 
 // Reset puts the credits back to the starting amount.
