@@ -276,7 +276,7 @@ func main() {
 	}
 	ebiten.SetWindowSize(int(ui.ScreenW*scale), int(ui.ScreenH*scale))
 	ebiten.SetWindowTitle("Video Casino")
-	ebiten.SetWindowIcon(windowIcons())
+	ebiten.SetWindowIcon(ui.WindowIcons())
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 	if err := ebiten.RunGame(newApp()); err != nil {
 		log.Fatal(err)
