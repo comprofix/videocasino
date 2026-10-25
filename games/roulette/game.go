@@ -802,8 +802,9 @@ const (
 )
 
 var (
-	wood     = color.RGBA{120, 60, 16, 255}
-	darkWood = color.RGBA{58, 28, 8, 255}
+	wood       = color.RGBA{120, 60, 16, 255}
+	darkWood   = color.RGBA{58, 28, 8, 255}
+	ballShadow = color.RGBA{0, 0, 0, 120} // black, part see-through
 )
 
 // polar returns the point at the given angle, clockwise from the top, and
@@ -892,7 +893,7 @@ func (g *Game) drawWheel(screen *ebiten.Image) {
 	if g.hasBall {
 		angle, r := g.ball()
 		x, y := polar(wheelX, wheelY, angle, r)
-		ui.FillCircle(screen, x+1, y+1.5, ballR, color.RGBA{0, 0, 0, 120})
+		ui.FillCircle(screen, x+1, y+1.5, ballR, ballShadow)
 		ui.FillCircle(screen, x, y, ballR, ui.White)
 		ui.FillCircle(screen, x-1.2, y-1.2, 1.5, ui.LightGray)
 	}
