@@ -6,6 +6,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 
 	"videocasino/cards"
+	"videocasino/palette"
 )
 
 // The size of a card at scale 1.
@@ -16,12 +17,12 @@ const (
 
 // The colours of a playing card.
 var (
-	cardFace  = color.RGBA{250, 250, 244, 255}
-	cardEdge  = color.RGBA{120, 120, 120, 255}
-	cardRed   = color.RGBA{204, 16, 32, 255}
-	cardBlack = color.RGBA{20, 20, 24, 255}
-	backDark  = color.RGBA{140, 16, 28, 255}
-	backLight = color.RGBA{200, 60, 70, 255}
+	cardFace  = palette.White
+	cardEdge  = palette.Fog
+	cardRed   = palette.Crimson
+	cardBlack = palette.Ink
+	backDark  = palette.Crimson
+	backLight = palette.Rose
 )
 
 var rankText = [...]string{"2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"}
@@ -82,7 +83,7 @@ func DrawJoker(dst *ebiten.Image, x, y, scale float64) {
 			cx+p.tipX*s, band+p.tipY*s)
 	}
 	for _, p := range points {
-		FillCircle(dst, cx+p.tipX*s, band+p.tipY*s, 6*s, Gold)
+		FillCircle(dst, cx+p.tipX*s, band+p.tipY*s, 6*s, palette.Amber)
 		FrameCircle(dst, cx+p.tipX*s, band+p.tipY*s, 6*s, 1.5*s, cardBlack)
 	}
 	FillRoundRect(dst, cx-36*s, band-2*s, 72*s, 14*s, 4*s, cardBlack)

@@ -14,6 +14,7 @@ import (
 	"videocasino/bank"
 	"videocasino/cards"
 	"videocasino/games/blackjack/table"
+	"videocasino/palette"
 	"videocasino/shuffle"
 	"videocasino/ui"
 )
@@ -127,7 +128,7 @@ func New(b *bank.Bank, snd *ui.Sounds) *Game {
 		},
 		Columns: 1, Rows: 4,
 		Y: 190, RowH: 36,
-		Number: ui.White, Title: ui.LightRed,
+		Number: palette.White, Title: palette.Red,
 	}
 	g.message = "CHOOSE YOUR BET AND PRESS DEAL"
 
@@ -584,7 +585,7 @@ func (g *Game) showHint() {
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(felt)
-	ui.DrawBorder(screen, ui.Brown)
+	ui.DrawBorder(screen, palette.Rust)
 
 	switch g.scene {
 	case sceneMenu:
@@ -600,12 +601,12 @@ func (g *Game) Draw(screen *ebiten.Image) {
 }
 
 func (g *Game) drawMenu(screen *ebiten.Image) {
-	ui.DrawText(screen, "BLACKJACK", ui.ScreenW/2, 70, 48, ui.Yellow, ui.AlignCenter, ui.AlignStart)
-	ui.DrawText(screen, "WITH PERFECT PAIRS", ui.ScreenW/2, 128, 20, ui.White, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "BLACKJACK", ui.ScreenW/2, 70, 48, palette.Gold, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "WITH PERFECT PAIRS", ui.ScreenW/2, 128, 20, palette.White, ui.AlignCenter, ui.AlignStart)
 
 	g.menu.Draw(screen)
-	ui.DrawText(screen, "ARROWS move    ENTER or NUMBER choose    ESC main menu", ui.ScreenW/2, 550, 11, ui.LightGray, ui.AlignCenter, ui.AlignStart)
-	ui.DrawText(screen, "MAKE YOUR CHOICE", ui.ScreenW/2, 350, 24, ui.LightCyan, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "ARROWS move    ENTER or NUMBER choose    ESC main menu", ui.ScreenW/2, 550, 11, palette.Fog, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "MAKE YOUR CHOICE", ui.ScreenW/2, 350, 24, palette.Seafoam, ui.AlignCenter, ui.AlignStart)
 
 	// A blackjack, for luck.
 	const scale = 0.62
@@ -614,7 +615,7 @@ func (g *Game) drawMenu(screen *ebiten.Image) {
 }
 
 func (g *Game) drawHelp(screen *ebiten.Image) {
-	ui.DrawText(screen, "HOW TO PLAY", ui.ScreenW/2, 22, 30, ui.Yellow, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "HOW TO PLAY", ui.ScreenW/2, 22, 30, palette.Gold, ui.AlignCenter, ui.AlignStart)
 
 	pays := table.PairPays
 	lines := []string{
@@ -637,7 +638,7 @@ func (g *Game) drawHelp(screen *ebiten.Image) {
 		"for a split without the cards the other hand has still to draw.",
 	}
 	for i, l := range lines {
-		ui.DrawText(screen, l, ui.ScreenW/2-275, 60+float64(i)*18, 15, ui.White, ui.AlignStart, ui.AlignStart)
+		ui.DrawText(screen, l, ui.ScreenW/2-275, 60+float64(i)*18, 15, palette.White, ui.AlignStart, ui.AlignStart)
 	}
 
 	keys := [][2]string{
@@ -653,15 +654,15 @@ func (g *Game) drawHelp(screen *ebiten.Image) {
 	}
 	for i, k := range keys {
 		y := 322 + float64(i)*18
-		ui.DrawText(screen, k[0], ui.ScreenW/2-70, y, 14, ui.LightRed, ui.AlignEnd, ui.AlignStart)
-		ui.DrawText(screen, k[1], ui.ScreenW/2-45, y, 14, ui.White, ui.AlignStart, ui.AlignStart)
+		ui.DrawText(screen, k[0], ui.ScreenW/2-70, y, 14, palette.Red, ui.AlignEnd, ui.AlignStart)
+		ui.DrawText(screen, k[1], ui.ScreenW/2-45, y, 14, palette.White, ui.AlignStart, ui.AlignStart)
 	}
-	ui.DrawText(screen, "The buttons on screen can be clicked with the mouse.", ui.ScreenW/2, 494, 13, ui.LightGray, ui.AlignCenter, ui.AlignStart)
-	ui.DrawText(screen, "PRESS ENTER TO RETURN", ui.ScreenW/2, 546, 20, ui.LightCyan, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "The buttons on screen can be clicked with the mouse.", ui.ScreenW/2, 494, 13, palette.Fog, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "PRESS ENTER TO RETURN", ui.ScreenW/2, 546, 20, palette.Seafoam, ui.AlignCenter, ui.AlignStart)
 }
 
 func (g *Game) drawAbout(screen *ebiten.Image) {
-	ui.DrawText(screen, "ABOUT THIS GAME", ui.ScreenW/2, 50, 36, ui.Yellow, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "ABOUT THIS GAME", ui.ScreenW/2, 50, 36, palette.Gold, ui.AlignCenter, ui.AlignStart)
 
 	returns := "Working out what it pays back..."
 	if o := g.odds.Load(); o != nil {
@@ -682,9 +683,9 @@ func (g *Game) drawAbout(screen *ebiten.Image) {
 		"No real money goes in or comes out.",
 	}
 	for i, l := range lines {
-		ui.DrawText(screen, l, ui.ScreenW/2, 130+float64(i)*28, 18, ui.White, ui.AlignCenter, ui.AlignStart)
+		ui.DrawText(screen, l, ui.ScreenW/2, 130+float64(i)*28, 18, palette.White, ui.AlignCenter, ui.AlignStart)
 	}
-	ui.DrawText(screen, "PRESS ENTER TO RETURN", ui.ScreenW/2, 500, 20, ui.LightCyan, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "PRESS ENTER TO RETURN", ui.ScreenW/2, 500, 20, palette.Seafoam, ui.AlignCenter, ui.AlignStart)
 }
 
 // drawCards draws a hand overlapped and centred on cx, squeezed up if it
@@ -733,7 +734,7 @@ func (g *Game) drawPlay(screen *ebiten.Image) {
 	}
 	g.drawShoe(screen)
 
-	ui.DrawText(screen, g.message, centre, messageY, 15, ui.Yellow, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, g.message, centre, messageY, 15, palette.Gold, ui.AlignCenter, ui.AlignStart)
 
 	// The bets on show are the ones the hand was dealt for while it is
 	// being played, and the ones chosen for the next otherwise.
@@ -741,10 +742,10 @@ func (g *Game) drawPlay(screen *ebiten.Image) {
 	if g.m.Dealt || g.revealing {
 		bet, side = g.m.Stake, g.m.Side
 	}
-	drawStat(screen, "CREDITS", bank.Dollars(g.credits), 0, ui.LightGreen)
-	drawStat(screen, "BET", bank.Money(bet), 1, ui.White)
-	drawStat(screen, "PERFECT PAIRS BET", bank.Money(side), 2, ui.White)
-	drawStat(screen, "WIN", bank.Money(g.win), 3, ui.Yellow)
+	drawStat(screen, "CREDITS", bank.Dollars(g.credits), 0, palette.Leaf)
+	drawStat(screen, "BET", bank.Money(bet), 1, palette.White)
+	drawStat(screen, "PERFECT PAIRS BET", bank.Money(side), 2, palette.White)
+	drawStat(screen, "WIN", bank.Money(g.win), 3, palette.Gold)
 
 	// The hand's buttons work only while there is a hand to play, and the
 	// bets only between hands.
@@ -775,9 +776,9 @@ func (g *Game) drawPlay(screen *ebiten.Image) {
 	}
 
 	b := dealButton
-	fill, edge, ink := color.Color(ui.Green), color.Color(ui.LightGreen), color.Color(ui.White)
+	fill, edge, ink := color.Color(palette.Forest), color.Color(palette.Leaf), color.Color(palette.White)
 	if locked {
-		fill, edge, ink = ui.Black, ui.DarkGray, ui.DarkGray
+		fill, edge, ink = palette.Ink, palette.Dusk, palette.Dusk
 	}
 	ui.FillRect(screen, b.X, b.Y, b.W, b.H, fill)
 	ui.FrameRect(screen, b.X, b.Y, b.W, b.H, 2, edge)
@@ -791,25 +792,25 @@ func (g *Game) drawPlay(screen *ebiten.Image) {
 		sound = "OFF"
 	}
 	hint := fmt.Sprintf("SPACE deal    1-4 play    H hint    UP/DOWN bet    LEFT/RIGHT pairs bet    C coin    R reset    S sound %s    ESC menu", sound)
-	ui.DrawText(screen, hint, ui.ScreenW/2, 552, 11, ui.LightGray, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, hint, ui.ScreenW/2, 552, 11, palette.Fog, ui.AlignCenter, ui.AlignStart)
 }
 
 // drawPanel lists what the game pays down the right of the table.
 func (g *Game) drawPanel(screen *ebiten.Image) {
 	const top, height = dealerY - 17, playerY + cardH - dealerY + 17
-	ui.FillRect(screen, panelX, top, panelW, height, ui.Black)
-	ui.FrameRect(screen, panelX, top, panelW, height, 2, ui.Yellow)
+	ui.FillRect(screen, panelX, top, panelW, height, palette.Ink)
+	ui.FrameRect(screen, panelX, top, panelW, height, 2, palette.Gold)
 
 	y := float64(top + 8)
 	title := func(s string) {
-		ui.DrawText(screen, s, panelX+panelW/2, y, 14, ui.Yellow, ui.AlignCenter, ui.AlignStart)
+		ui.DrawText(screen, s, panelX+panelW/2, y, 14, palette.Gold, ui.AlignCenter, ui.AlignStart)
 		y += 22
 	}
 	row := func(name, pays string, lit bool) {
-		ink := color.Color(ui.White)
+		ink := color.Color(palette.White)
 		if lit {
-			ui.FillRect(screen, panelX+3, y-2, panelW-6, 17, ui.White)
-			ink = ui.Black
+			ui.FillRect(screen, panelX+3, y-2, panelW-6, 17, palette.White)
+			ink = palette.Ink
 		}
 		ui.DrawText(screen, name, panelX+10, y, 12, ink, ui.AlignStart, ui.AlignStart)
 		ui.DrawText(screen, pays, panelX+panelW-10, y, 12, ink, ui.AlignEnd, ui.AlignStart)
@@ -825,13 +826,13 @@ func (g *Game) drawPanel(screen *ebiten.Image) {
 	row("WIN", "1 TO 1", false)
 	row("PUSH", "BET BACK", false)
 	y += 8
-	ui.DrawText(screen, fmt.Sprintf("DEALER STANDS ON %d", table.DealerStands), panelX+10, y, 11, ui.LightGray, ui.AlignStart, ui.AlignStart)
+	ui.DrawText(screen, fmt.Sprintf("DEALER STANDS ON %d", table.DealerStands), panelX+10, y, 11, palette.Fog, ui.AlignStart, ui.AlignStart)
 	y += 15
-	ui.DrawText(screen, fmt.Sprintf("DOUBLE ON HARD %d TO %d", table.DoubleFrom, table.DoubleTo), panelX+10, y, 11, ui.LightGray, ui.AlignStart, ui.AlignStart)
+	ui.DrawText(screen, fmt.Sprintf("DOUBLE ON HARD %d TO %d", table.DoubleFrom, table.DoubleTo), panelX+10, y, 11, palette.Fog, ui.AlignStart, ui.AlignStart)
 	y += 15
-	ui.DrawText(screen, fmt.Sprintf("%d DECKS, SHUFFLED", table.Decks), panelX+10, y, 11, ui.LightGray, ui.AlignStart, ui.AlignStart)
+	ui.DrawText(screen, fmt.Sprintf("%d DECKS, SHUFFLED", table.Decks), panelX+10, y, 11, palette.Fog, ui.AlignStart, ui.AlignStart)
 	y += 15
-	ui.DrawText(screen, "AT THE CUT CARD", panelX+10, y, 11, ui.LightGray, ui.AlignStart, ui.AlignStart)
+	ui.DrawText(screen, "AT THE CUT CARD", panelX+10, y, 11, palette.Fog, ui.AlignStart, ui.AlignStart)
 	y += 24
 
 	// Perfect Pairs pays for the hand on the table from the deal onwards.
@@ -845,7 +846,7 @@ func (g *Game) drawPanel(screen *ebiten.Image) {
 	}
 	y += 8
 	for _, l := range []string{"PAID ON YOUR FIRST", "TWO CARDS, AT THE DEAL"} {
-		ui.DrawText(screen, l, panelX+10, y, 11, ui.LightGray, ui.AlignStart, ui.AlignStart)
+		ui.DrawText(screen, l, panelX+10, y, 11, palette.Fog, ui.AlignStart, ui.AlignStart)
 		y += 15
 	}
 }
@@ -853,7 +854,7 @@ func (g *Game) drawPanel(screen *ebiten.Image) {
 // drawStat draws a labelled figure in one of four columns under the table.
 func drawStat(screen *ebiten.Image, label, value string, column int, c color.Color) {
 	x := tableX + (float64(column)+0.5)*tableW/4
-	ui.DrawText(screen, label, x, statY, 11, ui.LightGray, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, label, x, statY, 11, palette.Fog, ui.AlignCenter, ui.AlignStart)
 	ui.DrawText(screen, value, x, statY+13, 24, c, ui.AlignCenter, ui.AlignStart)
 }
 
@@ -872,20 +873,20 @@ func (g *Game) drawShoe(screen *ebiten.Image) {
 
 	// The cut card stands that many cards in from the front of what is
 	// left. Once it has come out it is gone from the shoe.
-	note, ink := "", color.Color(ui.LightGray)
+	note, ink := "", color.Color(palette.Fog)
 	cut := -1.0
 	switch {
 	case g.shuffling:
-		note, ink = "SHUFFLING", ui.Yellow
+		note, ink = "SHUFFLING", palette.Gold
 	case g.m.CutOut():
-		note, ink = "CUT CARD OUT: SHUFFLE NEXT", ui.Yellow
+		note, ink = "CUT CARD OUT: SHUFFLE NEXT", palette.Gold
 	default:
 		cut = float64(g.m.ToCut) / table.ShoeSize
 		if g.m.Shuffled && len(g.m.Hands) > 0 {
 			note = "NEW SHOE"
 		}
 	}
-	ui.DrawShoe(screen, box, full, cut, ui.Brown, note, ink)
+	ui.DrawShoe(screen, box, full, cut, palette.Rust, note, ink)
 
 	// The cut card itself, once it has come out: a plain yellow card dealt
 	// onto the table beside the shoe, where it lies until the shuffle.
@@ -917,12 +918,12 @@ func (g *Game) drawHands(screen *ebiten.Image) {
 		label = "DEALER: " + totalText(dealer)
 		drawCards(screen, dealer, 0, centre, dealerY, dealerW)
 	}
-	ui.DrawText(screen, label, centre, dealerY-17, 13, ui.White, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, label, centre, dealerY-17, 13, palette.White, ui.AlignCenter, ui.AlignStart)
 
 	// The player's hand, or the two it was split into.
 	if len(g.m.Hands) == 0 {
 		drawCards(screen, nil, 2, centre, playerY, tableW-60)
-		ui.DrawText(screen, "YOUR HAND", centre, playerY-17, 13, ui.White, ui.AlignCenter, ui.AlignStart)
+		ui.DrawText(screen, "YOUR HAND", centre, playerY-17, 13, palette.White, ui.AlignCenter, ui.AlignStart)
 	}
 	for i := range g.m.Hands {
 		h := &g.m.Hands[i]
@@ -932,9 +933,9 @@ func (g *Game) drawHands(screen *ebiten.Image) {
 			width = tableW/2 - 30
 			name = fmt.Sprintf("HAND %d", i+1)
 		}
-		ink := color.Color(ui.White)
+		ink := color.Color(palette.White)
 		if g.m.Dealt && i == g.m.Active {
-			ink = ui.Yellow
+			ink = palette.Gold
 		}
 		label := fmt.Sprintf("%s: %s    BET %s", name, totalText(h.Cards), bank.Money(h.Bet))
 		ui.DrawText(screen, label, cx, playerY-17, 13, ink, ui.AlignCenter, ui.AlignStart)
@@ -942,18 +943,18 @@ func (g *Game) drawHands(screen *ebiten.Image) {
 
 		// Once the dealer has played, each hand is marked with how it went.
 		if !g.m.Dealt && !g.revealing && i < len(g.m.Last.Outcomes) {
-			tag, fill := "LOST", color.Color(ui.Red)
+			tag, fill := "LOST", color.Color(palette.Crimson)
 			switch g.m.Last.Outcomes[i] {
 			case table.Won:
-				tag, fill = "WON", ui.Green
+				tag, fill = "WON", palette.Forest
 			case table.WonBlackjack:
-				tag, fill = "BLACKJACK", ui.Green
+				tag, fill = "BLACKJACK", palette.Forest
 			case table.Pushed:
-				tag, fill = "PUSH", ui.Blue
+				tag, fill = "PUSH", palette.Cobalt
 			}
 			const tagW, tagH = 96, 20
 			ui.FillRect(screen, cx-tagW/2, playerY+cardH-tagH-6, tagW, tagH, fill)
-			ui.DrawText(screen, tag, cx, playerY+cardH-tagH/2-6, 13, ui.White, ui.AlignCenter, ui.AlignCenter)
+			ui.DrawText(screen, tag, cx, playerY+cardH-tagH/2-6, 13, palette.White, ui.AlignCenter, ui.AlignCenter)
 		}
 	}
 }

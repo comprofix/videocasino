@@ -21,28 +21,6 @@ const (
 	Border  = 15
 )
 
-// The 16-colour palette of the old PC screens.
-var (
-	Black        = color.RGBA{0, 0, 0, 255}
-	Blue         = color.RGBA{0, 0, 170, 255}
-	Green        = color.RGBA{0, 170, 0, 255}
-	Red          = color.RGBA{170, 0, 0, 255}
-	Magenta      = color.RGBA{170, 0, 170, 255}
-	Brown        = color.RGBA{170, 85, 0, 255}
-	LightGray    = color.RGBA{170, 170, 170, 255}
-	DarkGray     = color.RGBA{85, 85, 85, 255}
-	LightBlue    = color.RGBA{85, 85, 255, 255}
-	LightCyan    = color.RGBA{85, 255, 255, 255}
-	LightGreen   = color.RGBA{85, 255, 85, 255}
-	LightRed     = color.RGBA{255, 85, 85, 255}
-	LightMagenta = color.RGBA{255, 85, 255, 255}
-	Yellow       = color.RGBA{255, 255, 85, 255}
-	White        = color.RGBA{255, 255, 255, 255}
-)
-
-// Gold is the colour of a coin, which the palette has no good match for.
-var Gold = color.RGBA{255, 170, 0, 255}
-
 var fontSource *text.GoTextFaceSource
 
 func init() {
@@ -138,4 +116,10 @@ func DrawBorder(dst *ebiten.Image, c color.Color) {
 	FillRect(dst, 0, ScreenH-Border, ScreenW, Border, c)
 	FillRect(dst, 0, 0, Border, ScreenH, c)
 	FillRect(dst, ScreenW-Border, 0, Border, ScreenH, c)
+}
+
+// Faded is c made part see-through, for shading laid over the screen: an
+// alpha of 255 is solid and 0 is not there at all.
+func Faded(c color.RGBA, alpha uint8) color.Color {
+	return color.NRGBA{c.R, c.G, c.B, alpha}
 }

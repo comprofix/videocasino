@@ -5,6 +5,8 @@ import (
 	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
+
+	"videocasino/palette"
 )
 
 // ChipR is the size of a chip lying on a table.
@@ -14,8 +16,8 @@ const ChipR = 11
 // casino chips go: white, red, green, black and yellow. The ink is what the
 // amount is written in on each.
 var (
-	chipFills = []color.Color{White, Red, Green, Black, Yellow}
-	chipInks  = []color.Color{Black, White, White, White, Black}
+	chipFills = []color.Color{palette.White, palette.Crimson, palette.Forest, palette.Ink, palette.Gold}
+	chipInks  = []color.Color{palette.Ink, palette.White, palette.White, palette.White, palette.Ink}
 )
 
 // chipText writes an amount of credits, a cent each, short enough to fit on
@@ -41,13 +43,13 @@ func DrawChip(dst *ebiten.Image, x, y float64, amount int, chips []int, lit bool
 			fill, ink = chipFills[i], chipInks[i]
 		}
 	}
-	rim := color.Color(LightGray)
+	rim := color.Color(palette.Fog)
 	if lit {
-		rim = Yellow
+		rim = palette.Gold
 	}
-	FillCircle(dst, x, y, ChipR, Black)
+	FillCircle(dst, x, y, ChipR, palette.Ink)
 	FillCircle(dst, x, y, ChipR-1, rim)
 	FillCircle(dst, x, y, ChipR-3, fill)
-	FrameCircle(dst, x, y, ChipR-3, 1, DarkGray)
+	FrameCircle(dst, x, y, ChipR-3, 1, palette.Dusk)
 	DrawText(dst, chipText(amount), x, y, 8, ink, AlignCenter, AlignCenter)
 }

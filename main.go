@@ -4,7 +4,6 @@ package main
 
 import (
 	"fmt"
-	"image/color"
 	"log"
 	"slices"
 	"strings"
@@ -22,6 +21,7 @@ import (
 	"videocasino/games/slot"
 	"videocasino/games/threecard"
 	"videocasino/games/videopoker"
+	"videocasino/palette"
 	"videocasino/ui"
 )
 
@@ -50,7 +50,7 @@ const (
 )
 
 // The menu's own colour: a deep red, under a gold border.
-var carpet = color.RGBA{96, 0, 0, 255}
+var carpet = palette.Maroon
 
 const (
 	rowsY = 150 // the first line of the menu
@@ -114,7 +114,7 @@ func newApp() *App {
 		Foot:    "EXIT",
 		Columns: 2, Rows: 4,
 		Y: rowsY, RowH: rowH,
-		Number: ui.White, Title: ui.White,
+		Number: palette.White, Title: palette.White,
 	}
 	for _, e := range a.entries {
 		a.menu.Items = append(a.menu.Items, ui.MenuItem{Title: e.title, Dim: e.game == nil})
@@ -236,23 +236,23 @@ func (a *App) Draw(screen *ebiten.Image) {
 	}
 
 	screen.Fill(carpet)
-	ui.DrawBorder(screen, ui.Gold)
+	ui.DrawBorder(screen, palette.Amber)
 	if a.scene == sceneBye {
-		ui.DrawText(screen, "Thanks for playing", ui.ScreenW/2, ui.ScreenH/2, 44, ui.Yellow, ui.AlignCenter, ui.AlignCenter)
+		ui.DrawText(screen, "Thanks for playing", ui.ScreenW/2, ui.ScreenH/2, 44, palette.Gold, ui.AlignCenter, ui.AlignCenter)
 		return
 	}
 	a.drawMenu(screen)
 }
 
 func (a *App) drawMenu(screen *ebiten.Image) {
-	ui.DrawText(screen, "VIDEO CASINO", ui.ScreenW/2, 70, 48, ui.Yellow, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "VIDEO CASINO", ui.ScreenW/2, 70, 48, palette.Gold, ui.AlignCenter, ui.AlignStart)
 
 	a.menu.Draw(screen)
-	ui.DrawText(screen, "MAKE YOUR CHOICE", ui.ScreenW/2, a.menu.Bottom()+12, 24, ui.LightCyan, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "MAKE YOUR CHOICE", ui.ScreenW/2, a.menu.Bottom()+12, 24, palette.Seafoam, ui.AlignCenter, ui.AlignStart)
 
-	ui.DrawText(screen, "CREDITS", ui.ScreenW/2, creditsY, 11, ui.LightGray, ui.AlignCenter, ui.AlignStart)
-	ui.DrawText(screen, bank.Dollars(a.bank.Credits), ui.ScreenW/2, creditsY+13, 32, ui.LightGreen, ui.AlignCenter, ui.AlignStart)
-	ui.DrawText(screen, a.message, ui.ScreenW/2, messageY, 16, ui.Yellow, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "CREDITS", ui.ScreenW/2, creditsY, 11, palette.Fog, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, bank.Dollars(a.bank.Credits), ui.ScreenW/2, creditsY+13, 32, palette.Leaf, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, a.message, ui.ScreenW/2, messageY, 16, palette.Gold, ui.AlignCenter, ui.AlignStart)
 
 	coin := fmt.Sprintf("INSERT COIN +$%d", bank.CoinCredits/100)
 	ui.DrawCoinButton(screen, coinButton, 14, coin)
@@ -263,7 +263,7 @@ func (a *App) drawMenu(screen *ebiten.Image) {
 		sound = "OFF"
 	}
 	hint := fmt.Sprintf("ARROWS move    ENTER or NUMBER choose    C coin    R reset    S sound %s    ESC exit", sound)
-	ui.DrawText(screen, hint, ui.ScreenW/2, 550, 11, ui.LightGray, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, hint, ui.ScreenW/2, 550, 11, palette.Fog, ui.AlignCenter, ui.AlignStart)
 
 	a.confirm.Draw(screen)
 }

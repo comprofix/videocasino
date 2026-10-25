@@ -14,6 +14,7 @@ import (
 
 	"videocasino/bank"
 	"videocasino/games/roulette/wheel"
+	"videocasino/palette"
 	"videocasino/ui"
 )
 
@@ -105,7 +106,7 @@ func New(b *bank.Bank, snd *ui.Sounds) *Game {
 		},
 		Columns: 1, Rows: 4,
 		Y: 190, RowH: 36,
-		Number: ui.White, Title: ui.LightRed,
+		Number: palette.White, Title: palette.Red,
 	}
 	g.m = wheel.NewRandom(b)
 	g.mark = middle(0)
@@ -502,16 +503,16 @@ func colourName(n int) string {
 func numberInk(n int) color.Color {
 	switch {
 	case wheel.IsRed(n):
-		return ui.Red
+		return palette.Crimson
 	case wheel.IsBlack(n):
-		return ui.Black
+		return palette.Ink
 	}
-	return ui.Green
+	return palette.Forest
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(felt)
-	ui.DrawBorder(screen, ui.Red)
+	ui.DrawBorder(screen, palette.Crimson)
 
 	switch g.scene {
 	case sceneMenu:
@@ -527,26 +528,26 @@ func (g *Game) Draw(screen *ebiten.Image) {
 }
 
 func (g *Game) drawMenu(screen *ebiten.Image) {
-	ui.DrawText(screen, "ROULETTE", ui.ScreenW/2, 70, 48, ui.Yellow, ui.AlignCenter, ui.AlignStart)
-	ui.DrawText(screen, "SINGLE ZERO", ui.ScreenW/2, 128, 20, ui.White, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "ROULETTE", ui.ScreenW/2, 70, 48, palette.Gold, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "SINGLE ZERO", ui.ScreenW/2, 128, 20, palette.White, ui.AlignCenter, ui.AlignStart)
 
 	g.menu.Draw(screen)
-	ui.DrawText(screen, "ARROWS move    ENTER or NUMBER choose    ESC main menu", ui.ScreenW/2, 550, 11, ui.LightGray, ui.AlignCenter, ui.AlignStart)
-	ui.DrawText(screen, "MAKE YOUR CHOICE", ui.ScreenW/2, 350, 24, ui.LightCyan, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "ARROWS move    ENTER or NUMBER choose    ESC main menu", ui.ScreenW/2, 550, 11, palette.Fog, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "MAKE YOUR CHOICE", ui.ScreenW/2, 350, 24, palette.Seafoam, ui.AlignCenter, ui.AlignStart)
 
 	// A run of numbers as they lie round the wheel, for luck.
 	const size, count = 40, 11
 	for i := range count {
 		n := wheel.Order[(i+wheel.Pockets-count/2)%wheel.Pockets]
 		x := ui.ScreenW/2 + (float64(i)-count/2.0)*(size+4) + 2
-		ui.FillRect(screen, x, 440, size, size, ui.LightGray)
+		ui.FillRect(screen, x, 440, size, size, palette.Fog)
 		ui.FillRect(screen, x+2, 442, size-4, size-4, numberInk(n))
-		ui.DrawText(screen, fmt.Sprint(n), x+size/2, 440+size/2, 18, ui.White, ui.AlignCenter, ui.AlignCenter)
+		ui.DrawText(screen, fmt.Sprint(n), x+size/2, 440+size/2, 18, palette.White, ui.AlignCenter, ui.AlignCenter)
 	}
 }
 
 func (g *Game) drawHelp(screen *ebiten.Image) {
-	ui.DrawText(screen, "HOW TO PLAY", ui.ScreenW/2, 22, 30, ui.Yellow, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "HOW TO PLAY", ui.ScreenW/2, 22, 30, palette.Gold, ui.AlignCenter, ui.AlignStart)
 
 	p := wheel.Pays
 	lines := []string{
@@ -562,7 +563,7 @@ func (g *Game) drawHelp(screen *ebiten.Image) {
 		"SPIN with nothing on the table makes the last bets again.",
 	}
 	for i, l := range lines {
-		ui.DrawText(screen, l, ui.ScreenW/2-275, 64+float64(i)*19, 15, ui.White, ui.AlignStart, ui.AlignStart)
+		ui.DrawText(screen, l, ui.ScreenW/2-275, 64+float64(i)*19, 15, palette.White, ui.AlignStart, ui.AlignStart)
 	}
 
 	keys := [][2]string{
@@ -580,16 +581,16 @@ func (g *Game) drawHelp(screen *ebiten.Image) {
 	}
 	for i, k := range keys {
 		y := 268 + float64(i)*18
-		ui.DrawText(screen, k[0], ui.ScreenW/2-70, y, 14, ui.LightRed, ui.AlignEnd, ui.AlignStart)
-		ui.DrawText(screen, k[1], ui.ScreenW/2-45, y, 14, ui.White, ui.AlignStart, ui.AlignStart)
+		ui.DrawText(screen, k[0], ui.ScreenW/2-70, y, 14, palette.Red, ui.AlignEnd, ui.AlignStart)
+		ui.DrawText(screen, k[1], ui.ScreenW/2-45, y, 14, palette.White, ui.AlignStart, ui.AlignStart)
 	}
-	ui.DrawText(screen, "With the mouse, click to put a chip down and right click to take it off.", ui.ScreenW/2, 478, 13, ui.LightGray, ui.AlignCenter, ui.AlignStart)
-	ui.DrawText(screen, "Click near a line or a corner to bet on it, not on the number.", ui.ScreenW/2, 496, 13, ui.LightGray, ui.AlignCenter, ui.AlignStart)
-	ui.DrawText(screen, "PRESS ENTER TO RETURN", ui.ScreenW/2, 546, 20, ui.LightCyan, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "With the mouse, click to put a chip down and right click to take it off.", ui.ScreenW/2, 478, 13, palette.Fog, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "Click near a line or a corner to bet on it, not on the number.", ui.ScreenW/2, 496, 13, palette.Fog, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "PRESS ENTER TO RETURN", ui.ScreenW/2, 546, 20, palette.Seafoam, ui.AlignCenter, ui.AlignStart)
 }
 
 func (g *Game) drawAbout(screen *ebiten.Image) {
-	ui.DrawText(screen, "ABOUT THIS GAME", ui.ScreenW/2, 60, 36, ui.Yellow, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "ABOUT THIS GAME", ui.ScreenW/2, 60, 36, palette.Gold, ui.AlignCenter, ui.AlignStart)
 
 	lines := []string{
 		"Roulette is written in Go with Ebitengine.",
@@ -604,9 +605,9 @@ func (g *Game) drawAbout(screen *ebiten.Image) {
 		"No real money goes in or comes out.",
 	}
 	for i, l := range lines {
-		ui.DrawText(screen, l, ui.ScreenW/2, 150+float64(i)*28, 18, ui.White, ui.AlignCenter, ui.AlignStart)
+		ui.DrawText(screen, l, ui.ScreenW/2, 150+float64(i)*28, 18, palette.White, ui.AlignCenter, ui.AlignStart)
 	}
-	ui.DrawText(screen, "PRESS ENTER TO RETURN", ui.ScreenW/2, 480, 20, ui.LightCyan, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "PRESS ENTER TO RETURN", ui.ScreenW/2, 480, 20, palette.Seafoam, ui.AlignCenter, ui.AlignStart)
 }
 
 func (g *Game) drawPlay(screen *ebiten.Image) {
@@ -620,9 +621,9 @@ func (g *Game) drawPlay(screen *ebiten.Image) {
 	ui.DrawButton(screen, clearButton, false, g.spinning, 13, "CLEAR")
 	ui.DrawButton(screen, rebetButton, false, g.spinning || g.m.LastTotal() == 0, 13, "REBET")
 
-	ui.FillRect(screen, spinButton.X, spinButton.Y, spinButton.W, spinButton.H, ui.Green)
-	ui.FrameRect(screen, spinButton.X, spinButton.Y, spinButton.W, spinButton.H, 2, ui.LightGreen)
-	ui.DrawText(screen, "SPIN", spinButton.X+spinButton.W/2, spinButton.Y+spinButton.H/2, 30, ui.White, ui.AlignCenter, ui.AlignCenter)
+	ui.FillRect(screen, spinButton.X, spinButton.Y, spinButton.W, spinButton.H, palette.Forest)
+	ui.FrameRect(screen, spinButton.X, spinButton.Y, spinButton.W, spinButton.H, 2, palette.Leaf)
+	ui.DrawText(screen, "SPIN", spinButton.X+spinButton.W/2, spinButton.Y+spinButton.H/2, 30, palette.White, ui.AlignCenter, ui.AlignCenter)
 
 	coinLabel := fmt.Sprintf("INSERT COIN +$%d", bank.CoinCredits/100)
 	ui.DrawCoinButton(screen, coinButton, 14, coinLabel)
@@ -632,12 +633,12 @@ func (g *Game) drawPlay(screen *ebiten.Image) {
 	if spot, ok := spotAt(g.mark); ok && !g.spinning {
 		s := wheel.Spots[spot]
 		x := (resetButton.X + resetButton.W + spinButton.X) / 2
-		ui.DrawText(screen, s.String(), x, rowBY+4, 12, ui.LightCyan, ui.AlignCenter, ui.AlignStart)
+		ui.DrawText(screen, s.String(), x, rowBY+4, 12, palette.Seafoam, ui.AlignCenter, ui.AlignStart)
 		note := fmt.Sprintf("PAYS %d TO 1", s.Pays())
 		if bet := g.m.Bets[spot]; bet > 0 {
 			note += "    BET " + bank.Money(bet)
 		}
-		ui.DrawText(screen, note, x, rowBY+22, 11, ui.White, ui.AlignCenter, ui.AlignStart)
+		ui.DrawText(screen, note, x, rowBY+22, 11, palette.White, ui.AlignCenter, ui.AlignStart)
 	}
 
 	sound := "ON"
@@ -645,7 +646,7 @@ func (g *Game) drawPlay(screen *ebiten.Image) {
 		sound = "OFF"
 	}
 	hint := fmt.Sprintf("SPACE spin   ARROWS move   ENTER bet   BACKSPACE take off   1-5 chip   X clear   B rebet   C coin   R reset   S sound %s   ESC menu", sound)
-	ui.DrawText(screen, hint, ui.ScreenW/2, 550, 11, ui.LightGray, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, hint, ui.ScreenW/2, 550, 11, palette.Fog, ui.AlignCenter, ui.AlignStart)
 }
 
 // drawStatus draws what is beside the wheel: the numbers that have come up,
@@ -656,21 +657,21 @@ func (g *Game) drawStatus(screen *ebiten.Image) {
 	if g.spinning {
 		history = history[1:]
 	}
-	ui.DrawText(screen, "LAST NUMBERS", 250, 28, 11, ui.LightGray, ui.AlignStart, ui.AlignStart)
+	ui.DrawText(screen, "LAST NUMBERS", 250, 28, 11, palette.Fog, ui.AlignStart, ui.AlignStart)
 	for i, n := range history {
 		x := 250 + float64(i)*32
-		ui.FillRect(screen, x, 44, 28, 28, ui.LightGray)
+		ui.FillRect(screen, x, 44, 28, 28, palette.Fog)
 		ui.FillRect(screen, x+1, 45, 26, 26, numberInk(n))
-		ui.DrawText(screen, fmt.Sprint(n), x+14, 58, 14, ui.White, ui.AlignCenter, ui.AlignCenter)
+		ui.DrawText(screen, fmt.Sprint(n), x+14, 58, 14, palette.White, ui.AlignCenter, ui.AlignCenter)
 	}
 
 	const boxX, boxY, boxSize = 250, 88, 100
-	ui.FillRect(screen, boxX, boxY, boxSize, boxSize, ui.LightGray)
-	ui.FillRect(screen, boxX+3, boxY+3, boxSize-6, boxSize-6, ui.Black)
+	ui.FillRect(screen, boxX, boxY, boxSize, boxSize, palette.Fog)
+	ui.FillRect(screen, boxX+3, boxY+3, boxSize-6, boxSize-6, palette.Ink)
 	if g.shown || !g.spinning && len(history) > 0 {
 		n := history[0]
 		ui.FillRect(screen, boxX+3, boxY+3, boxSize-6, boxSize-6, numberInk(n))
-		ui.DrawText(screen, fmt.Sprint(n), boxX+boxSize/2, boxY+boxSize/2, 56, ui.White, ui.AlignCenter, ui.AlignCenter)
+		ui.DrawText(screen, fmt.Sprint(n), boxX+boxSize/2, boxY+boxSize/2, 56, palette.White, ui.AlignCenter, ui.AlignCenter)
 
 		what := []string{"ZERO"}
 		if n != 0 {
@@ -683,10 +684,10 @@ func (g *Game) drawStatus(screen *ebiten.Image) {
 			}
 		}
 		for i, w := range what {
-			ui.DrawText(screen, w, boxX+boxSize+16, boxY+8+float64(i)*30, 18, ui.White, ui.AlignStart, ui.AlignStart)
+			ui.DrawText(screen, w, boxX+boxSize+16, boxY+8+float64(i)*30, 18, palette.White, ui.AlignStart, ui.AlignStart)
 		}
 	}
-	ui.DrawText(screen, g.message, 515, 214, 14, ui.Yellow, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, g.message, 515, 214, 14, palette.Gold, ui.AlignCenter, ui.AlignStart)
 
 	// Once the wheel is spun the bets are off the table and in play.
 	bet := g.m.Total()
@@ -695,12 +696,12 @@ func (g *Game) drawStatus(screen *ebiten.Image) {
 	}
 	figure := func(i int, label, v string, c color.Color) {
 		y := 80 + float64(i)*44
-		ui.DrawText(screen, label, 690, y, 11, ui.LightGray, ui.AlignCenter, ui.AlignStart)
+		ui.DrawText(screen, label, 690, y, 11, palette.Fog, ui.AlignCenter, ui.AlignStart)
 		ui.DrawText(screen, v, 690, y+13, 24, c, ui.AlignCenter, ui.AlignStart)
 	}
-	figure(0, "CREDITS", bank.Dollars(g.credits), ui.LightGreen)
-	figure(1, "TOTAL BET", bank.Money(bet), ui.Yellow)
-	figure(2, "WIN", bank.Money(g.win), ui.White)
+	figure(0, "CREDITS", bank.Dollars(g.credits), palette.Leaf)
+	figure(1, "TOTAL BET", bank.Money(bet), palette.Gold)
+	figure(2, "WIN", bank.Money(g.win), palette.White)
 }
 
 // drawTable draws the table, the chips on it and the marker.
@@ -711,10 +712,10 @@ func (g *Game) drawTable(screen *ebiten.Image) {
 		if fill != nil {
 			ui.FillRect(screen, b.X, b.Y, b.W, b.H, fill)
 		}
-		ui.FrameRect(screen, b.X, b.Y, b.W, b.H, 1, ui.LightGray)
-		ui.DrawText(screen, label, b.X+(b.W-room)/2, b.Y+b.H/2, size, ui.White, ui.AlignCenter, ui.AlignCenter)
+		ui.FrameRect(screen, b.X, b.Y, b.W, b.H, 1, palette.Fog)
+		ui.DrawText(screen, label, b.X+(b.W-room)/2, b.Y+b.H/2, size, palette.White, ui.AlignCenter, ui.AlignCenter)
 	}
-	cell(zeroButton, ui.Green, 20, 0, "0")
+	cell(zeroButton, palette.Forest, 20, 0, "0")
 	for n := 1; n < wheel.Pockets; n++ {
 		cell(numberButton(n), numberInk(n), 17, 0, fmt.Sprint(n))
 	}
@@ -728,9 +729,9 @@ func (g *Game) drawTable(screen *ebiten.Image) {
 		var fill color.Color
 		switch wheel.Spots[spot].Kind {
 		case wheel.Reds:
-			fill = ui.Red
+			fill = palette.Crimson
 		case wheel.Blacks:
-			fill = ui.Black
+			fill = palette.Ink
 		}
 		cell(evenButton(i), fill, 12, chipRoom, wheel.Spots[spot].String())
 	}
@@ -753,7 +754,7 @@ func (g *Game) drawTable(screen *ebiten.Image) {
 			if n != 0 {
 				b = numberButton(n)
 			}
-			ui.FrameRect(screen, b.X+2, b.Y+2, b.W-4, b.H-4, 2, ui.LightCyan)
+			ui.FrameRect(screen, b.X+2, b.Y+2, b.W-4, b.H-4, 2, palette.Seafoam)
 		}
 	}
 	// The winning number flashes.
@@ -762,13 +763,13 @@ func (g *Game) drawTable(screen *ebiten.Image) {
 		if n := g.result.Number; n != 0 {
 			b = numberButton(n)
 		}
-		ui.FrameRect(screen, b.X+1, b.Y+1, b.W-2, b.H-2, 4, ui.Yellow)
+		ui.FrameRect(screen, b.X+1, b.Y+1, b.W-2, b.H-2, 4, palette.Gold)
 	}
 
 	// The columns' bets are named where a chip would hide the name least.
 	for row := range gridRows {
 		b := columnButton(row)
-		ui.DrawText(screen, "2 TO 1", b.X+b.W/2, b.Y+b.H/2, 11, ui.White, ui.AlignCenter, ui.AlignCenter)
+		ui.DrawText(screen, "2 TO 1", b.X+b.W/2, b.Y+b.H/2, 11, palette.White, ui.AlignCenter, ui.AlignCenter)
 	}
 
 	for spot, bet := range bets {
@@ -781,10 +782,10 @@ func (g *Game) drawTable(screen *ebiten.Image) {
 
 	if onSpot && !g.spinning {
 		if b, ok := outside(g.mark); ok {
-			ui.FrameRect(screen, b.X+1, b.Y+1, b.W-2, b.H-2, 2, ui.White)
+			ui.FrameRect(screen, b.X+1, b.Y+1, b.W-2, b.H-2, 2, palette.White)
 		} else {
 			x, y := chipAt(g.mark)
-			ui.FrameCircle(screen, x, y, ui.ChipR+3, 2, ui.White)
+			ui.FrameCircle(screen, x, y, ui.ChipR+3, 2, palette.White)
 		}
 	}
 }
@@ -843,17 +844,17 @@ func plateImage() *ebiten.Image {
 		a := (float64(i) - 0.5) * pocketTurn
 		x0, y0 := polar(c, c, a, hubR)
 		x1, y1 := polar(c, c, a, plateR-1)
-		ui.DrawLine(plate, x0, y0, x1, y1, 1.2, ui.LightGray)
+		ui.DrawLine(plate, x0, y0, x1, y1, 1.2, palette.Fog)
 	}
-	ui.FrameCircle(plate, c, c, plateR-1, 1.5, ui.LightGray)
-	ui.FrameCircle(plate, c, c, numberR-11, 1, ui.LightGray)
+	ui.FrameCircle(plate, c, c, plateR-1, 1.5, palette.Fog)
+	ui.FrameCircle(plate, c, c, numberR-11, 1, palette.Fog)
 
 	// Each number is written facing outwards over its pocket.
 	const tw, th = 24, 16
 	label := ebiten.NewImage(tw, th)
 	for i, n := range wheel.Order {
 		label.Clear()
-		ui.DrawText(label, fmt.Sprint(n), tw/2, th/2, 11, ui.White, ui.AlignCenter, ui.AlignCenter)
+		ui.DrawText(label, fmt.Sprint(n), tw/2, th/2, 11, palette.White, ui.AlignCenter, ui.AlignCenter)
 		a := float64(i) * pocketTurn
 		x, y := polar(c, c, a, numberR)
 		op := &ebiten.DrawImageOptions{Filter: ebiten.FilterLinear}
@@ -865,22 +866,22 @@ func plateImage() *ebiten.Image {
 	label.Deallocate()
 
 	// The hub, with a turret whose arms show the wheel turning.
-	ui.FillCircle(plate, c, c, hubR, ui.LightGray)
+	ui.FillCircle(plate, c, c, hubR, palette.Fog)
 	ui.FillCircle(plate, c, c, hubR-1.5, wood)
 	ui.FillCircle(plate, c, c, hubR-14, darkWood)
 	for i := range 4 {
 		x, y := polar(c, c, float64(i)*math.Pi/2, hubR-10)
-		ui.DrawLine(plate, c, c, x, y, 4, ui.Gold)
-		ui.FillCircle(plate, x, y, 4, ui.Gold)
+		ui.DrawLine(plate, c, c, x, y, 4, palette.Amber)
+		ui.FillCircle(plate, x, y, 4, palette.Amber)
 	}
-	ui.FillCircle(plate, c, c, 8, ui.Gold)
-	ui.FillCircle(plate, c, c, 4, ui.Yellow)
+	ui.FillCircle(plate, c, c, 8, palette.Amber)
+	ui.FillCircle(plate, c, c, 4, palette.Gold)
 	return plate
 }
 
 // drawWheel draws the wheel as it stands, and the ball if it is on it.
 func (g *Game) drawWheel(screen *ebiten.Image) {
-	ui.FillCircle(screen, wheelX, wheelY, rimR, ui.Gold)
+	ui.FillCircle(screen, wheelX, wheelY, rimR, palette.Amber)
 	ui.FillCircle(screen, wheelX, wheelY, rimR-2, wood)
 	ui.FillCircle(screen, wheelX, wheelY, trackR+5, darkWood)
 
@@ -894,7 +895,7 @@ func (g *Game) drawWheel(screen *ebiten.Image) {
 		angle, r := g.ball()
 		x, y := polar(wheelX, wheelY, angle, r)
 		ui.FillCircle(screen, x+1, y+1.5, ballR, ballShadow)
-		ui.FillCircle(screen, x, y, ballR, ui.White)
-		ui.FillCircle(screen, x-1.2, y-1.2, 1.5, ui.LightGray)
+		ui.FillCircle(screen, x, y, ballR, palette.White)
+		ui.FillCircle(screen, x-1.2, y-1.2, 1.5, palette.Fog)
 	}
 }

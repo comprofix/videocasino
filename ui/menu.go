@@ -6,6 +6,8 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
+
+	"videocasino/palette"
 )
 
 // What a menu's Update reports when no entry of its list was chosen.
@@ -299,7 +301,7 @@ func (m *Menu) Draw(dst *ebiten.Image) {
 		case placeItem:
 			text = m.Items[p.item].Title
 			if m.Items[p.item].Dim {
-				number, title = DarkGray, DarkGray
+				number, title = palette.Dusk, palette.Dusk
 			}
 		case placePrev:
 			text = "PREVIOUS PAGE"
@@ -311,9 +313,9 @@ func (m *Menu) Draw(dst *ebiten.Image) {
 
 		b := m.rect(i)
 		if i == m.at {
-			FillRect(dst, b.X, b.Y, b.W, b.H, Yellow)
-			if number != DarkGray {
-				number, title = Black, Black
+			FillRect(dst, b.X, b.Y, b.W, b.H, palette.Gold)
+			if number != palette.Dusk {
+				number, title = palette.Ink, palette.Ink
 			}
 		}
 		DrawText(dst, fmt.Sprintf("%d.", key), b.X+menuInset, b.Y+3, menuSize, number, AlignStart, AlignStart)

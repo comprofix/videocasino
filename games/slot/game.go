@@ -15,6 +15,7 @@ import (
 
 	"videocasino/bank"
 	"videocasino/games/slot/machine"
+	"videocasino/palette"
 	"videocasino/ui"
 )
 
@@ -125,7 +126,7 @@ func New(b *bank.Bank, snd *ui.Sounds) *Game {
 		},
 		Columns: 1, Rows: 4,
 		Y: 190, RowH: 36,
-		Number: ui.White, Title: ui.LightRed,
+		Number: palette.White, Title: palette.Red,
 	}
 	g.message = "CHOOSE YOUR BET AND PRESS SPIN"
 
@@ -569,8 +570,8 @@ func (g *Game) shownWin() *machine.LineWin {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	screen.Fill(ui.Black)
-	ui.DrawBorder(screen, ui.Green)
+	screen.Fill(palette.Ink)
+	ui.DrawBorder(screen, palette.Forest)
 
 	switch g.scene {
 	case sceneMenu:
@@ -586,11 +587,11 @@ func (g *Game) Draw(screen *ebiten.Image) {
 }
 
 func (g *Game) drawMenu(screen *ebiten.Image) {
-	ui.DrawText(screen, "SLOT MACHINE", ui.ScreenW/2, 90, 40, ui.Yellow, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "SLOT MACHINE", ui.ScreenW/2, 90, 40, palette.Gold, ui.AlignCenter, ui.AlignStart)
 
 	g.menu.Draw(screen)
-	ui.DrawText(screen, "ARROWS move    ENTER or NUMBER choose    ESC main menu", ui.ScreenW/2, 550, 11, ui.LightGray, ui.AlignCenter, ui.AlignStart)
-	ui.DrawText(screen, "MAKE YOUR CHOICE", ui.ScreenW/2, 355, 24, ui.LightBlue, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "ARROWS move    ENTER or NUMBER choose    ESC main menu", ui.ScreenW/2, 550, 11, palette.Fog, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "MAKE YOUR CHOICE", ui.ScreenW/2, 355, 24, palette.Blue, ui.AlignCenter, ui.AlignStart)
 
 	for s := machine.Ten; s < machine.NumSymbols; s++ {
 		drawSymbol(screen, s, ui.ScreenW/2-286+float64(s)*52, 470, 0.42)
@@ -598,7 +599,7 @@ func (g *Game) drawMenu(screen *ebiten.Image) {
 }
 
 func (g *Game) drawHelp(screen *ebiten.Image) {
-	ui.DrawText(screen, "HOW TO PLAY", ui.ScreenW/2, 24, 32, ui.Yellow, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "HOW TO PLAY", ui.ScreenW/2, 24, 32, palette.Gold, ui.AlignCenter, ui.AlignStart)
 
 	top := machine.BetChoices[len(machine.BetChoices)-1]
 	lines := []string{
@@ -620,7 +621,7 @@ func (g *Game) drawHelp(screen *ebiten.Image) {
 		fmt.Sprintf("often the more you bet: most often at %d a line on %d lines.", top, len(machine.Paylines)),
 	}
 	for i, l := range lines {
-		ui.DrawText(screen, l, ui.ScreenW/2-280, 66+float64(i)*19, 15, ui.White, ui.AlignStart, ui.AlignStart)
+		ui.DrawText(screen, l, ui.ScreenW/2-280, 66+float64(i)*19, 15, palette.White, ui.AlignStart, ui.AlignStart)
 	}
 
 	keys := [][2]string{
@@ -636,15 +637,15 @@ func (g *Game) drawHelp(screen *ebiten.Image) {
 	}
 	for i, k := range keys {
 		y := 360 + float64(i)*18
-		ui.DrawText(screen, k[0], ui.ScreenW/2-70, y, 14, ui.LightRed, ui.AlignEnd, ui.AlignStart)
-		ui.DrawText(screen, k[1], ui.ScreenW/2-45, y, 14, ui.White, ui.AlignStart, ui.AlignStart)
+		ui.DrawText(screen, k[0], ui.ScreenW/2-70, y, 14, palette.Red, ui.AlignEnd, ui.AlignStart)
+		ui.DrawText(screen, k[1], ui.ScreenW/2-45, y, 14, palette.White, ui.AlignStart, ui.AlignStart)
 	}
-	ui.DrawText(screen, "The buttons on screen can be clicked with the mouse.", ui.ScreenW/2, 527, 13, ui.LightGray, ui.AlignCenter, ui.AlignStart)
-	ui.DrawText(screen, "PRESS ENTER TO RETURN", ui.ScreenW/2, 550, 20, ui.LightBlue, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "The buttons on screen can be clicked with the mouse.", ui.ScreenW/2, 527, 13, palette.Fog, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "PRESS ENTER TO RETURN", ui.ScreenW/2, 550, 20, palette.Blue, ui.AlignCenter, ui.AlignStart)
 }
 
 func (g *Game) drawAbout(screen *ebiten.Image) {
-	ui.DrawText(screen, "ABOUT THIS GAME", ui.ScreenW/2, 60, 36, ui.Yellow, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "ABOUT THIS GAME", ui.ScreenW/2, 60, 36, palette.Gold, ui.AlignCenter, ui.AlignStart)
 
 	returns := "Working out what it pays back..."
 	if rtp := g.rtp.Load(); rtp != nil {
@@ -657,9 +658,9 @@ func (g *Game) drawAbout(screen *ebiten.Image) {
 		returns,
 	}
 	for i, l := range lines {
-		ui.DrawText(screen, l, ui.ScreenW/2, 170+float64(i)*28, 18, ui.White, ui.AlignCenter, ui.AlignStart)
+		ui.DrawText(screen, l, ui.ScreenW/2, 170+float64(i)*28, 18, palette.White, ui.AlignCenter, ui.AlignStart)
 	}
-	ui.DrawText(screen, "PRESS ENTER TO RETURN", ui.ScreenW/2, 480, 20, ui.LightBlue, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "PRESS ENTER TO RETURN", ui.ScreenW/2, 480, 20, palette.Blue, ui.AlignCenter, ui.AlignStart)
 }
 
 func (g *Game) drawPlay(screen *ebiten.Image) {
@@ -668,7 +669,7 @@ func (g *Game) drawPlay(screen *ebiten.Image) {
 	g.drawStatus(screen, inFree)
 
 	// The magenta frame shows through the gaps between the reels.
-	ui.FillRect(screen, reelsX-5, reelsY-5, reelsW+10, reelsH+10, ui.Magenta)
+	ui.FillRect(screen, reelsX-5, reelsY-5, reelsW+10, reelsH+10, palette.Grape)
 	var win *machine.LineWin
 	if g.link.show {
 		g.drawLinkGrid(screen)
@@ -682,18 +683,18 @@ func (g *Game) drawPlay(screen *ebiten.Image) {
 
 	g.drawPaytable(screen, win)
 
-	drawStat(screen, "CREDITS", g.credits, 0, ui.LightGreen)
+	drawStat(screen, "CREDITS", g.credits, 0, palette.Leaf)
 	// A credit is a cent: the balance in dollars goes under it.
 	cx, _ := cellCentre(0, 0)
-	ui.DrawText(screen, bank.Dollars(g.credits), cx, 413, 11, ui.LightGray, ui.AlignCenter, ui.AlignStart)
-	drawStat(screen, "BET / LINE", g.m.BetPerLine, 1, ui.White)
-	drawStat(screen, "LINES", g.m.Lines, 2, ui.White)
+	ui.DrawText(screen, bank.Dollars(g.credits), cx, 413, 11, palette.Fog, ui.AlignCenter, ui.AlignStart)
+	drawStat(screen, "BET / LINE", g.m.BetPerLine, 1, palette.White)
+	drawStat(screen, "LINES", g.m.Lines, 2, palette.White)
 	if inFree {
-		drawStat(screen, "FREE GAMES WIN", g.free.win, 3, ui.Yellow)
+		drawStat(screen, "FREE GAMES WIN", g.free.win, 3, palette.Gold)
 	} else {
-		drawStat(screen, "TOTAL BET", g.m.TotalBet(), 3, ui.White)
+		drawStat(screen, "TOTAL BET", g.m.TotalBet(), 3, palette.White)
 	}
-	drawStat(screen, "WIN", g.win, 4, ui.Yellow)
+	drawStat(screen, "WIN", g.win, 4, palette.Gold)
 
 	message := g.message
 	if win != nil && len(g.result.Wins) > 1 {
@@ -702,7 +703,7 @@ func (g *Game) drawPlay(screen *ebiten.Image) {
 	if win != nil && win.Doubled {
 		message += fmt.Sprintf("   JOKER x%d", machine.WildMultiplier)
 	}
-	ui.DrawText(screen, message, reelsX+reelsW/2, 420, 16, ui.LightRed, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, message, reelsX+reelsW/2, 420, 16, palette.Red, ui.AlignCenter, ui.AlignStart)
 
 	// The bet cannot be changed while a feature is being played.
 	locked := g.m.FreeSpins > 0 || g.linkBusy()
@@ -723,13 +724,13 @@ func (g *Game) drawPlay(screen *ebiten.Image) {
 	case locked:
 		spinLabel = "FREE GAME"
 	}
-	ui.FillRect(screen, spinButton.X, spinButton.Y, spinButton.W, spinButton.H, ui.Green)
-	ui.FrameRect(screen, spinButton.X, spinButton.Y, spinButton.W, spinButton.H, 2, ui.LightGreen)
+	ui.FillRect(screen, spinButton.X, spinButton.Y, spinButton.W, spinButton.H, palette.Forest)
+	ui.FrameRect(screen, spinButton.X, spinButton.Y, spinButton.W, spinButton.H, 2, palette.Leaf)
 	spinSize := 26.0
 	if len(spinLabel) > 4 {
 		spinSize = 18
 	}
-	ui.DrawText(screen, spinLabel, spinButton.X+spinButton.W/2, spinButton.Y+spinButton.H/2, spinSize, ui.White, ui.AlignCenter, ui.AlignCenter)
+	ui.DrawText(screen, spinLabel, spinButton.X+spinButton.W/2, spinButton.Y+spinButton.H/2, spinSize, palette.White, ui.AlignCenter, ui.AlignCenter)
 
 	autoLabel := "SPIN"
 	if g.auto {
@@ -746,7 +747,7 @@ func (g *Game) drawPlay(screen *ebiten.Image) {
 		sound = "OFF"
 	}
 	hint := fmt.Sprintf("SPACE spin    UP/DOWN bet per line    LEFT/RIGHT lines    M max bet    A auto    C coin    R reset    S sound %s    ESC menu", sound)
-	ui.DrawText(screen, hint, ui.ScreenW/2, 550, 11, ui.LightGray, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, hint, ui.ScreenW/2, 550, 11, palette.Fog, ui.AlignCenter, ui.AlignStart)
 }
 
 // drawWins marks what the last spin won over the reels: the payline on
@@ -767,13 +768,13 @@ func (g *Game) drawWins(screen *ebiten.Image, win *machine.LineWin) {
 	if !g.spinning && g.result.FreeSpinsWon > 0 && g.ticks/15%2 == 0 {
 		if g.result.Free {
 			r := bigRect()
-			ui.FrameRect(screen, float64(r.Min.X)+2, float64(r.Min.Y)+2, float64(r.Dx())-4, float64(r.Dy())-4, 4, ui.White)
+			ui.FrameRect(screen, float64(r.Min.X)+2, float64(r.Min.Y)+2, float64(r.Dx())-4, float64(r.Dy())-4, 4, palette.White)
 			return
 		}
 		for i, col := range g.result.Grid {
 			for row, sym := range col {
 				if sym == machine.Scatter {
-					boxCell(screen, i, row, ui.White)
+					boxCell(screen, i, row, palette.White)
 				}
 			}
 		}
@@ -821,7 +822,7 @@ func drawPayline(screen *ebiten.Image, line int, width float64) {
 	px, py := cellCentre(0, rows[0])
 	px = reelsX - 5
 	seg := func(x, y float64) {
-		ui.DrawLine(screen, px, py, x, y, width+2, ui.Black)
+		ui.DrawLine(screen, px, py, x, y, width+2, palette.Ink)
 		ui.DrawLine(screen, px, py, x, y, width, c)
 		px, py = x, y
 	}
@@ -965,13 +966,13 @@ func (g *Game) drawPaytable(screen *ebiten.Image, win *machine.LineWin) {
 		pays, title = &machine.FreePays, "FREE GAMES PAY"
 	}
 
-	ui.FrameRect(screen, panelX, top, panelW, panelH, 2, ui.Magenta)
-	ui.DrawText(screen, title, panelX+panelW/2, top+5, 15, ui.Yellow, ui.AlignCenter, ui.AlignStart)
+	ui.FrameRect(screen, panelX, top, panelW, panelH, 2, palette.Grape)
+	ui.DrawText(screen, title, panelX+panelW/2, top+5, 15, palette.Gold, ui.AlignCenter, ui.AlignStart)
 	for n := 2; n <= machine.Reels; n++ {
 		if free && n < 4 {
 			continue // nothing pays for fewer than four in a free game
 		}
-		ui.DrawText(screen, fmt.Sprintf("x%d", n), col(n), top+25, 12, ui.Yellow, ui.AlignEnd, ui.AlignStart)
+		ui.DrawText(screen, fmt.Sprintf("x%d", n), col(n), top+25, 12, palette.Gold, ui.AlignEnd, ui.AlignStart)
 	}
 
 	// The symbols are listed from the best paying down.
@@ -980,7 +981,7 @@ func (g *Game) drawPaytable(screen *ebiten.Image, win *machine.LineWin) {
 		cy := float64(rowsY + i*rowStep + rowStep/2)
 		lit := win != nil && win.Symbol == sym
 		if lit {
-			ui.FillRect(screen, panelX+3, cy-rowStep/2, panelW-6, rowStep, ui.DarkGray)
+			ui.FillRect(screen, panelX+3, cy-rowStep/2, panelW-6, rowStep, palette.Dusk)
 		}
 		drawSymbol(screen, sym, panelX+22, cy, icon)
 		for n := 2; n <= machine.Reels; n++ {
@@ -988,9 +989,9 @@ func (g *Game) drawPaytable(screen *ebiten.Image, win *machine.LineWin) {
 			if pay == 0 {
 				continue
 			}
-			c := color.Color(ui.White)
+			c := color.Color(palette.White)
 			if lit && n == win.Matched {
-				c = ui.Yellow
+				c = palette.Gold
 			}
 			ui.DrawText(screen, fmt.Sprint(pay), col(n), cy, 12, c, ui.AlignEnd, ui.AlignCenter)
 		}
@@ -999,7 +1000,7 @@ func (g *Game) drawPaytable(screen *ebiten.Image, win *machine.LineWin) {
 
 	y := float64(rowsY + i*rowStep + 4)
 	note := fmt.Sprintf("AT %d PER LINE", g.m.BetPerLine)
-	ui.DrawText(screen, note, panelX+panelW-12, y, 10, ui.LightGray, ui.AlignEnd, ui.AlignStart)
+	ui.DrawText(screen, note, panelX+panelW-12, y, 10, palette.Fog, ui.AlignEnd, ui.AlignStart)
 
 	bet := g.m.TotalBet()
 	notes := []string{
@@ -1017,13 +1018,13 @@ func (g *Game) drawPaytable(screen *ebiten.Image, win *machine.LineWin) {
 		}
 	}
 	for j, l := range notes {
-		ui.DrawText(screen, l, panelX+10, y+14+float64(j)*12, 9, ui.LightGray, ui.AlignStart, ui.AlignStart)
+		ui.DrawText(screen, l, panelX+10, y+14+float64(j)*12, 9, palette.Fog, ui.AlignStart, ui.AlignStart)
 	}
 }
 
 // drawStat draws a labelled number under the given reel column.
 func drawStat(screen *ebiten.Image, label string, value, column int, c color.Color) {
 	x, _ := cellCentre(column, 0)
-	ui.DrawText(screen, label, x, 370, 11, ui.LightGray, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, label, x, 370, 11, palette.Fog, ui.AlignCenter, ui.AlignStart)
 	ui.DrawText(screen, fmt.Sprint(value), x, 384, 24, c, ui.AlignCenter, ui.AlignStart)
 }

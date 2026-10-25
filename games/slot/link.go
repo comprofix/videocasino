@@ -7,6 +7,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 
 	"videocasino/games/slot/machine"
+	"videocasino/palette"
 	"videocasino/ui"
 )
 
@@ -148,20 +149,20 @@ func (g *Game) drawLinkGrid(screen *ebiten.Image) {
 			x, y := cellCentre(i, row)
 			ui.FillRect(screen, x-reelW/2, y-rowH/2, reelW, rowH, reelBack)
 			// Thin lines mark off the cells, which spin one by one.
-			ui.FrameRect(screen, x-reelW/2, y-rowH/2, reelW, rowH, 1, ui.DarkGray)
+			ui.FrameRect(screen, x-reelW/2, y-rowH/2, reelW, rowH, 1, palette.Dusk)
 
 			switch {
 			case l.state.Held[i][row]:
 				label := g.chipLabel(l.state.Chips[i][row], l.state.Bet)
 				drawChip(screen, x, y, reelScale, label)
 				if at := l.landed[i][row]; at > 0 && g.ticks-at < linkFlashTicks && g.ticks/5%2 == 0 {
-					boxCell(screen, i, row, ui.Yellow)
+					boxCell(screen, i, row, palette.Gold)
 				}
 			case l.phase == linkSpin:
 				// A blur of chips passing: each cell shows a faint one now
 				// and then, out of step with its neighbours.
 				if (g.ticks/3+i*2+row*3)%4 == 0 {
-					ui.FillCircle(screen, x, y, 37*reelScale, ui.DarkGray)
+					ui.FillCircle(screen, x, y, 37*reelScale, palette.Dusk)
 					ui.FillCircle(screen, x, y, 24*reelScale, reelBack)
 				}
 			}
@@ -182,10 +183,10 @@ var jackpots = [...]struct {
 	jackpot machine.Jackpot
 	fill    color.Color
 }{
-	{machine.Grand, ui.Red},
-	{machine.Major, ui.Magenta},
-	{machine.Minor, ui.Blue},
-	{machine.Mini, ui.Green},
+	{machine.Grand, palette.Crimson},
+	{machine.Major, palette.Grape},
+	{machine.Minor, palette.Cobalt},
+	{machine.Mini, palette.Forest},
 }
 
 // jackpotCredits is what a jackpot would pay at the bet being played.
@@ -209,28 +210,28 @@ func (g *Game) drawJackpots(screen *ebiten.Image) {
 	for i, j := range jackpots {
 		x := left + float64(i)*(w+gap)
 		ui.FillRect(screen, x, top, w, h, j.fill)
-		ui.FrameRect(screen, x, top, w, h, 2, ui.Yellow)
-		ui.DrawText(screen, j.jackpot.String(), x+8, top+h/2, 13, ui.Yellow, ui.AlignStart, ui.AlignCenter)
-		ui.DrawText(screen, money(g.jackpotCredits(j.jackpot)), x+w-8, top+h/2, 18, ui.White, ui.AlignEnd, ui.AlignCenter)
+		ui.FrameRect(screen, x, top, w, h, 2, palette.Gold)
+		ui.DrawText(screen, j.jackpot.String(), x+8, top+h/2, 13, palette.Gold, ui.AlignStart, ui.AlignCenter)
+		ui.DrawText(screen, money(g.jackpotCredits(j.jackpot)), x+w-8, top+h/2, 18, palette.White, ui.AlignEnd, ui.AlignCenter)
 	}
 }
 
 // drawStatus draws the line under the jackpots that says what is being
 // played: the game's name, or how a feature is going.
 func (g *Game) drawStatus(screen *ebiten.Image, inFree bool) {
-	text, c := "SLOT MACHINE", color.Color(ui.LightBlue)
+	text, c := "SLOT MACHINE", color.Color(palette.Blue)
 	switch {
 	case g.link.show && g.link.phase == linkDone:
-		text, c = fmt.Sprintf("LINK FEATURE PAID %d", g.link.total), ui.Yellow
+		text, c = fmt.Sprintf("LINK FEATURE PAID %d", g.link.total), palette.Gold
 	case g.link.show:
 		text = fmt.Sprintf("LINK FEATURE     RESPINS LEFT %d     TOTAL %d", g.link.state.Respins, g.link.total)
-		c = ui.Yellow
+		c = palette.Gold
 	case inFree && g.free.played == 0:
 		text = fmt.Sprintf("%d FREE GAMES     GIANT SYMBOL ON REELS 2 TO 4", g.free.total)
-		c = ui.Yellow
+		c = palette.Gold
 	case inFree:
 		text = fmt.Sprintf("FREE GAME %d OF %d", g.free.played, g.free.total)
-		c = ui.Yellow
+		c = palette.Gold
 	}
 	ui.DrawText(screen, text, ui.ScreenW/2, 74, 15, c, ui.AlignCenter, ui.AlignCenter)
 }

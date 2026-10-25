@@ -6,6 +6,8 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
+
+	"videocasino/palette"
 )
 
 // Pressed reports whether any of the keys has just been pressed.
@@ -44,12 +46,12 @@ func (b Button) Hit(x, y int) bool {
 // DrawButton draws a button with one or two lines of text. A selected
 // button is shown lit, and a locked one dimmed.
 func DrawButton(dst *ebiten.Image, b Button, selected, locked bool, size float64, lines ...string) {
-	fill, edge, ink := color.Color(Blue), color.Color(LightBlue), color.Color(White)
+	fill, edge, ink := color.Color(palette.Cobalt), color.Color(palette.Blue), color.Color(palette.White)
 	switch {
 	case selected:
-		fill, edge, ink = Yellow, White, Black
+		fill, edge, ink = palette.Gold, palette.White, palette.Ink
 	case locked:
-		fill, edge, ink = Black, DarkGray, DarkGray
+		fill, edge, ink = palette.Ink, palette.Dusk, palette.Dusk
 	}
 	FillRect(dst, b.X, b.Y, b.W, b.H, fill)
 	FrameRect(dst, b.X, b.Y, b.W, b.H, 2, edge)
@@ -65,14 +67,14 @@ func DrawButton(dst *ebiten.Image, b Button, selected, locked bool, size float64
 // DrawCoinButton draws the button that inserts a coin, which looks the same
 // wherever it is.
 func DrawCoinButton(dst *ebiten.Image, b Button, size float64, label string) {
-	FillRect(dst, b.X, b.Y, b.W, b.H, Gold)
-	FrameRect(dst, b.X, b.Y, b.W, b.H, 2, Yellow)
-	DrawText(dst, label, b.X+b.W/2, b.Y+b.H/2, size, Black, AlignCenter, AlignCenter)
+	FillRect(dst, b.X, b.Y, b.W, b.H, palette.Amber)
+	FrameRect(dst, b.X, b.Y, b.W, b.H, 2, palette.Gold)
+	DrawText(dst, label, b.X+b.W/2, b.Y+b.H/2, size, palette.Ink, AlignCenter, AlignCenter)
 }
 
 // DrawResetButton draws the button that resets the credits.
 func DrawResetButton(dst *ebiten.Image, b Button, size float64) {
-	FillRect(dst, b.X, b.Y, b.W, b.H, Red)
-	FrameRect(dst, b.X, b.Y, b.W, b.H, 2, LightRed)
-	DrawText(dst, "RESET", b.X+b.W/2, b.Y+b.H/2, size, White, AlignCenter, AlignCenter)
+	FillRect(dst, b.X, b.Y, b.W, b.H, palette.Crimson)
+	FrameRect(dst, b.X, b.Y, b.W, b.H, 2, palette.Red)
+	DrawText(dst, "RESET", b.X+b.W/2, b.Y+b.H/2, size, palette.White, AlignCenter, AlignCenter)
 }

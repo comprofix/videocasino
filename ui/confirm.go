@@ -1,10 +1,10 @@
 package ui
 
 import (
-	"image/color"
-
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
+
+	"videocasino/palette"
 )
 
 // The box a question is asked in, centred on the screen.
@@ -16,8 +16,8 @@ const (
 )
 
 var (
-	confirmShade = color.RGBA{0, 0, 0, 170} // over the screen behind the box
-	confirmFill  = color.RGBA{96, 0, 0, 255}
+	confirmShade = Faded(palette.Ink, 170) // over the screen behind the box
+	confirmFill  = palette.Maroon
 
 	confirmYes = Button{X: ScreenW/2 - 130, Y: confirmY + 118, W: 110, H: 40}
 	confirmNo  = Button{X: ScreenW/2 + 20, Y: confirmY + 118, W: 110, H: 40}
@@ -96,11 +96,11 @@ func (c *Confirm) Draw(dst *ebiten.Image) {
 	}
 	FillRect(dst, 0, 0, ScreenW, ScreenH, confirmShade)
 	FillRect(dst, confirmX, confirmY, confirmW, confirmH, confirmFill)
-	FrameRect(dst, confirmX, confirmY, confirmW, confirmH, 3, Gold)
+	FrameRect(dst, confirmX, confirmY, confirmW, confirmH, 3, palette.Amber)
 
-	DrawText(dst, c.question, ScreenW/2, confirmY+46, 24, Yellow, AlignCenter, AlignCenter)
-	DrawText(dst, c.note, ScreenW/2, confirmY+84, 16, LightGray, AlignCenter, AlignCenter)
+	DrawText(dst, c.question, ScreenW/2, confirmY+46, 24, palette.Gold, AlignCenter, AlignCenter)
+	DrawText(dst, c.note, ScreenW/2, confirmY+84, 16, palette.Fog, AlignCenter, AlignCenter)
 	DrawButton(dst, confirmYes, c.yes, false, 20, "YES")
 	DrawButton(dst, confirmNo, !c.yes, false, 20, "NO")
-	DrawText(dst, "Y yes    N or ESC no    LEFT/RIGHT move    ENTER choose", ScreenW/2, confirmY+186, 11, LightGray, AlignCenter, AlignCenter)
+	DrawText(dst, "Y yes    N or ESC no    LEFT/RIGHT move    ENTER choose", ScreenW/2, confirmY+186, 11, palette.Fog, AlignCenter, AlignCenter)
 }

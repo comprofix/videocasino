@@ -17,6 +17,7 @@ import (
 	"videocasino/bank"
 	"videocasino/cards"
 	"videocasino/games/holdem/table"
+	"videocasino/palette"
 	"videocasino/pokerhand"
 	"videocasino/shuffle"
 	"videocasino/ui"
@@ -151,7 +152,7 @@ func New(b *bank.Bank, snd *ui.Sounds) *Game {
 		},
 		Columns: 1, Rows: 4,
 		Y: 190, RowH: 36,
-		Number: ui.White, Title: ui.LightRed,
+		Number: palette.White, Title: palette.Red,
 	}
 	g.m = table.NewRandom(b)
 	g.message = "PLACE YOUR BETS"
@@ -769,12 +770,12 @@ func (g *Game) Draw(screen *ebiten.Image) {
 }
 
 func (g *Game) drawMenu(screen *ebiten.Image) {
-	ui.DrawText(screen, "ULTIMATE TEXAS HOLD'EM", ui.ScreenW/2, 70, 44, ui.Yellow, ui.AlignCenter, ui.AlignStart)
-	ui.DrawText(screen, "POKER AGAINST THE DEALER", ui.ScreenW/2, 128, 20, ui.White, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "ULTIMATE TEXAS HOLD'EM", ui.ScreenW/2, 70, 44, palette.Gold, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "POKER AGAINST THE DEALER", ui.ScreenW/2, 128, 20, palette.White, ui.AlignCenter, ui.AlignStart)
 
 	g.menu.Draw(screen)
-	ui.DrawText(screen, "ARROWS move    ENTER or NUMBER choose    ESC main menu", ui.ScreenW/2, 550, 11, ui.LightGray, ui.AlignCenter, ui.AlignStart)
-	ui.DrawText(screen, "MAKE YOUR CHOICE", ui.ScreenW/2, 350, 24, ui.LightCyan, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "ARROWS move    ENTER or NUMBER choose    ESC main menu", ui.ScreenW/2, 550, 11, palette.Fog, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "MAKE YOUR CHOICE", ui.ScreenW/2, 350, 24, palette.Seafoam, ui.AlignCenter, ui.AlignStart)
 
 	// The best two cards there are to start with, for luck.
 	const scale = 0.62
@@ -785,7 +786,7 @@ func (g *Game) drawMenu(screen *ebiten.Image) {
 }
 
 func (g *Game) drawHelp(screen *ebiten.Image) {
-	ui.DrawText(screen, "HOW TO PLAY", ui.ScreenW/2, 22, 30, ui.Yellow, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "HOW TO PLAY", ui.ScreenW/2, 22, 30, palette.Gold, ui.AlignCenter, ui.AlignStart)
 
 	lines := []string{
 		"Put chips on the ANTE, which puts the same on the BLIND, and on TRIPS if",
@@ -801,7 +802,7 @@ func (g *Game) drawHelp(screen *ebiten.Image) {
 		"whatever the dealer holds, even if you fold. HINT gives the best play.",
 	}
 	for i, l := range lines {
-		ui.DrawText(screen, l, ui.ScreenW/2-285, 60+float64(i)*18, 15, ui.White, ui.AlignStart, ui.AlignStart)
+		ui.DrawText(screen, l, ui.ScreenW/2-285, 60+float64(i)*18, 15, palette.White, ui.AlignStart, ui.AlignStart)
 	}
 
 	keys := [][2]string{
@@ -820,15 +821,15 @@ func (g *Game) drawHelp(screen *ebiten.Image) {
 	}
 	for i, k := range keys {
 		y := 270 + float64(i)*18
-		ui.DrawText(screen, k[0], ui.ScreenW/2-70, y, 14, ui.LightRed, ui.AlignEnd, ui.AlignStart)
-		ui.DrawText(screen, k[1], ui.ScreenW/2-45, y, 14, ui.White, ui.AlignStart, ui.AlignStart)
+		ui.DrawText(screen, k[0], ui.ScreenW/2-70, y, 14, palette.Red, ui.AlignEnd, ui.AlignStart)
+		ui.DrawText(screen, k[1], ui.ScreenW/2-45, y, 14, palette.White, ui.AlignStart, ui.AlignStart)
 	}
-	ui.DrawText(screen, "With the mouse, click a bet to put a chip down and right click to take it off.", ui.ScreenW/2, 496, 13, ui.LightGray, ui.AlignCenter, ui.AlignStart)
-	ui.DrawText(screen, "PRESS ENTER TO RETURN", ui.ScreenW/2, 546, 20, ui.LightCyan, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "With the mouse, click a bet to put a chip down and right click to take it off.", ui.ScreenW/2, 496, 13, palette.Fog, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "PRESS ENTER TO RETURN", ui.ScreenW/2, 546, 20, palette.Seafoam, ui.AlignCenter, ui.AlignStart)
 }
 
 func (g *Game) drawAbout(screen *ebiten.Image) {
-	ui.DrawText(screen, "ABOUT THIS GAME", ui.ScreenW/2, 50, 36, ui.Yellow, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "ABOUT THIS GAME", ui.ScreenW/2, 50, 36, palette.Gold, ui.AlignCenter, ui.AlignStart)
 
 	lines := []string{
 		"Ultimate Texas Hold'em is written in Go with Ebitengine.",
@@ -845,9 +846,9 @@ func (g *Game) drawAbout(screen *ebiten.Image) {
 		"No real money goes in or comes out.",
 	}
 	for i, l := range lines {
-		ui.DrawText(screen, l, ui.ScreenW/2, 110+float64(i)*28, 18, ui.White, ui.AlignCenter, ui.AlignStart)
+		ui.DrawText(screen, l, ui.ScreenW/2, 110+float64(i)*28, 18, palette.White, ui.AlignCenter, ui.AlignStart)
 	}
-	ui.DrawText(screen, "PRESS ENTER TO RETURN", ui.ScreenW/2, 500, 20, ui.LightCyan, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "PRESS ENTER TO RETURN", ui.ScreenW/2, 500, 20, palette.Seafoam, ui.AlignCenter, ui.AlignStart)
 }
 
 // drawRow draws a row of cards with its middle at cx: as many face up as
@@ -864,10 +865,10 @@ func drawRow(screen *ebiten.Image, cs []cards.Card, shown int, cx, y float64, mi
 		}
 		ui.DrawCard(screen, c, cardX, y, cardScale)
 		if theirs[c] {
-			ui.FrameRect(screen, cardX-6, y-6, cardW+12, cardH+12, 2, ui.LightCyan)
+			ui.FrameRect(screen, cardX-6, y-6, cardW+12, cardH+12, 2, palette.Seafoam)
 		}
 		if mine[c] {
-			ui.FrameRect(screen, cardX-3, y-3, cardW+6, cardH+6, 3, ui.Yellow)
+			ui.FrameRect(screen, cardX-3, y-3, cardW+6, cardH+6, 3, palette.Gold)
 		}
 	}
 }
@@ -910,22 +911,22 @@ func (g *Game) drawPlay(screen *ebiten.Image) {
 				label += " - DOES NOT QUALIFY"
 			}
 		}
-		ui.DrawText(screen, label, tableX, dealerY-16, 13, ui.White, ui.AlignCenter, ui.AlignStart)
+		ui.DrawText(screen, label, tableX, dealerY-16, 13, palette.White, ui.AlignCenter, ui.AlignStart)
 		drawRow(screen, dealer[:], g.dealerShown, tableX, dealerY, mine, theirs)
 		drawRow(screen, board[:], g.boardShown, tableX, boardY, mine, theirs)
 
-		label, ink := "YOUR HAND", color.Color(ui.White)
+		label, ink := "YOUR HAND", color.Color(palette.White)
 		if g.playerShown == table.HoleSize {
 			label = "YOUR HAND: " + handName(hole, board[:g.boardShown])
 			if done && g.result.Outcome == table.Won {
-				ink = ui.Yellow
+				ink = palette.Gold
 			}
 		}
 		// Lined up with the first card, so a long name runs to the right.
 		ui.DrawText(screen, label, playerX-(cardW+cardStep)/2, playerY-16, 13, ink, ui.AlignStart, ui.AlignStart)
 		drawRow(screen, hole[:], g.playerShown, playerX, playerY, mine, theirs)
 	}
-	ui.DrawText(screen, g.message, tableX, messageY, 13, ui.Yellow, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, g.message, tableX, messageY, 13, palette.Gold, ui.AlignCenter, ui.AlignStart)
 
 	g.drawBets(screen)
 	g.drawPanel(screen)
@@ -972,15 +973,15 @@ func (g *Game) drawBets(screen *ebiten.Image) {
 
 	// Trips: a diamond.
 	pts := [4][2]float64{{tripsX, tripsY - tripsH}, {tripsX + tripsW, tripsY}, {tripsX, tripsY + tripsH}, {tripsX - tripsW, tripsY}}
-	edge := color.Color(ui.White)
+	edge := color.Color(palette.White)
 	if tripsLit {
-		edge = ui.Yellow
+		edge = palette.Gold
 	}
 	for i := range pts {
 		a, b := pts[i], pts[(i+1)%len(pts)]
 		ui.DrawLine(screen, a[0], a[1], b[0], b[1], 2, edge)
 		if marking && g.mark == table.Trips {
-			ui.DrawLine(screen, a[0]+sign(a[0]-tripsX)*5, a[1]+sign(a[1]-tripsY)*5, b[0]+sign(b[0]-tripsX)*5, b[1]+sign(b[1]-tripsY)*5, 2, ui.White)
+			ui.DrawLine(screen, a[0]+sign(a[0]-tripsX)*5, a[1]+sign(a[1]-tripsY)*5, b[0]+sign(b[0]-tripsX)*5, b[1]+sign(b[1]-tripsY)*5, 2, palette.White)
 		}
 	}
 	ui.DrawText(screen, "TRIPS", tripsX, tripsY-14, 11, letter, ui.AlignCenter, ui.AlignStart)
@@ -991,10 +992,10 @@ func (g *Game) drawBets(screen *ebiten.Image) {
 	circle := func(x, y float64, name string, amount int, lit, mark bool) {
 		ui.FrameCircle(screen, x, y, betR, 3, ring)
 		if lit {
-			ui.FrameCircle(screen, x, y, betR-3, 3, ui.Yellow)
+			ui.FrameCircle(screen, x, y, betR-3, 3, palette.Gold)
 		}
 		if mark {
-			ui.FrameCircle(screen, x, y, betR+3, 2, ui.White)
+			ui.FrameCircle(screen, x, y, betR+3, 2, palette.White)
 		}
 		ui.DrawText(screen, name, x, y-17, 11, letter, ui.AlignCenter, ui.AlignStart)
 		if amount > 0 {
@@ -1009,7 +1010,7 @@ func (g *Game) drawBets(screen *ebiten.Image) {
 	// The "=" between the ante and the blind, which are always the same.
 	mid := (anteX + blindX) / 2
 	for _, dy := range []float64{-4, 4} {
-		ui.DrawLine(screen, mid-8, anteY+dy, mid+8, anteY+dy, 3, ui.White)
+		ui.DrawLine(screen, mid-8, anteY+dy, mid+8, anteY+dy, 3, palette.White)
 	}
 }
 
@@ -1039,16 +1040,16 @@ func (g *Game) drawPanel(screen *ebiten.Image) {
 
 	y := 24.0
 	list := func(title string, pays func(pokerhand.Category) string) {
-		ui.DrawText(screen, title, panelX, y, 11, ui.LightGray, ui.AlignStart, ui.AlignStart)
+		ui.DrawText(screen, title, panelX, y, 11, palette.Fog, ui.AlignStart, ui.AlignStart)
 		y += 16
 		for c := pokerhand.RoyalFlush; c >= pokerhand.HighCard; c-- {
 			p := pays(c)
 			if p == "" {
 				continue
 			}
-			ink := color.Color(ui.White)
+			ink := color.Color(palette.White)
 			if c == made {
-				ink = ui.Yellow
+				ink = palette.Gold
 			}
 			ui.DrawText(screen, c.String(), panelX, y, 12, ink, ui.AlignStart, ui.AlignStart)
 			ui.DrawText(screen, p, panelX+panelW, y, 12, ink, ui.AlignEnd, ui.AlignStart)
@@ -1072,8 +1073,8 @@ func (g *Game) drawPanel(screen *ebiten.Image) {
 		}
 		return ""
 	})
-	ui.DrawText(screen, "DEALER NEEDS A PAIR", panelX, y, 10, ui.LightGray, ui.AlignStart, ui.AlignStart)
-	ui.DrawText(screen, "OR THE ANTE IS HANDED BACK", panelX, y+13, 10, ui.LightGray, ui.AlignStart, ui.AlignStart)
+	ui.DrawText(screen, "DEALER NEEDS A PAIR", panelX, y, 10, palette.Fog, ui.AlignStart, ui.AlignStart)
+	ui.DrawText(screen, "OR THE ANTE IS HANDED BACK", panelX, y+13, 10, palette.Fog, ui.AlignStart, ui.AlignStart)
 
 	// What is bet: on the table before the deal, and in play after it.
 	bet := g.m.Total()
@@ -1084,12 +1085,12 @@ func (g *Game) drawPanel(screen *ebiten.Image) {
 		bet = g.result.Staked()
 	}
 	cx := panelX + panelW/2.0
-	ui.DrawText(screen, "CREDITS", cx, 322, 11, ui.LightGray, ui.AlignCenter, ui.AlignStart)
-	ui.DrawText(screen, bank.Dollars(g.credits), cx, 335, 22, ui.LightGreen, ui.AlignCenter, ui.AlignStart)
-	ui.DrawText(screen, "TOTAL BET", panelX+45, 378, 11, ui.LightGray, ui.AlignCenter, ui.AlignStart)
-	ui.DrawText(screen, bank.Money(bet), panelX+45, 391, 20, ui.Yellow, ui.AlignCenter, ui.AlignStart)
-	ui.DrawText(screen, "WIN", panelX+panelW-45, 378, 11, ui.LightGray, ui.AlignCenter, ui.AlignStart)
-	ui.DrawText(screen, bank.Money(g.win), panelX+panelW-45, 391, 20, ui.White, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "CREDITS", cx, 322, 11, palette.Fog, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, bank.Dollars(g.credits), cx, 335, 22, palette.Leaf, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "TOTAL BET", panelX+45, 378, 11, palette.Fog, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, bank.Money(bet), panelX+45, 391, 20, palette.Gold, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, "WIN", panelX+panelW-45, 378, 11, palette.Fog, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, bank.Money(g.win), panelX+panelW-45, 391, 20, palette.White, ui.AlignCenter, ui.AlignStart)
 }
 
 func (g *Game) drawButtons(screen *ebiten.Image) {
@@ -1112,9 +1113,9 @@ func (g *Game) drawButtons(screen *ebiten.Image) {
 	ui.DrawCoinButton(screen, coinButton, 13, fmt.Sprintf("COIN +$%d", bank.CoinCredits/100))
 	ui.DrawResetButton(screen, resetButton, 13)
 
-	fill, edge, text := color.Color(ui.Green), color.Color(ui.LightGreen), color.Color(ui.White)
+	fill, edge, text := color.Color(palette.Forest), color.Color(palette.Leaf), color.Color(palette.White)
 	if !betting {
-		fill, edge, text = ui.Black, ui.DarkGray, ui.DarkGray
+		fill, edge, text = palette.Ink, palette.Dusk, palette.Dusk
 	}
 	ui.FillRect(screen, dealButton.X, dealButton.Y, dealButton.W, dealButton.H, fill)
 	ui.FrameRect(screen, dealButton.X, dealButton.Y, dealButton.W, dealButton.H, 2, edge)
@@ -1133,5 +1134,5 @@ func (g *Game) drawButtons(screen *ebiten.Image) {
 	case table.River:
 		keys = fmt.Sprintf("1 bet 1x    F fold    H hint    C coin    R reset    S sound %s    ESC menu", sound)
 	}
-	ui.DrawText(screen, keys, ui.ScreenW/2, 550, 11, ui.LightGray, ui.AlignCenter, ui.AlignStart)
+	ui.DrawText(screen, keys, ui.ScreenW/2, 550, 11, palette.Fog, ui.AlignCenter, ui.AlignStart)
 }
