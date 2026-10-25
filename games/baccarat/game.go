@@ -51,8 +51,8 @@ const (
 	burnPause = 3
 )
 
-// felt is the table: a deep purple, so that the game has a look of its own.
-var felt = color.RGBA{56, 16, 80, 255}
+// felt is the table: a purple, so that the game has a look of its own.
+var felt = palette.Grape
 
 type scene int
 

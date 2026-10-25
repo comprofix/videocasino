@@ -51,8 +51,8 @@ const (
 // The table: charcoal-black felt with a red edge, for the game's roots in
 // the Chinese game of dominoes it is named after.
 var (
-	felt    = color.RGBA{26, 26, 30, 255}
-	redEdge = color.RGBA{178, 28, 28, 255}
+	felt    = palette.Charcoal
+	redEdge = palette.Crimson
 )
 
 // shuffleLength is the shuffle shown before every hand: a single deck, so

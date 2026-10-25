@@ -47,11 +47,11 @@ const (
 	dealTicks = 16
 )
 
-// The table: a deep burgundy with an ivory edge, so that the game has a
+// The table: a wine red with a pale blush edge, so that the game has a
 // look of its own.
 var (
-	felt  = color.RGBA{88, 12, 32, 255}
-	ivory = color.RGBA{236, 226, 198, 255}
+	felt  = palette.Wine
+	ivory = palette.Blush
 )
 
 // shuffleLength is the shuffle shown before every hand: a single deck, so

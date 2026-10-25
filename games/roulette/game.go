@@ -41,7 +41,7 @@ const (
 )
 
 // felt is the table: a dark blue, so that the game has a look of its own.
-var felt = color.RGBA{0, 24, 80, 255}
+var felt = palette.Navy
 
 type scene int
 
@@ -803,9 +803,9 @@ const (
 )
 
 var (
-	wood       = color.RGBA{120, 60, 16, 255}
-	darkWood   = color.RGBA{58, 28, 8, 255}
-	ballShadow = color.RGBA{0, 0, 0, 120} // black, part see-through
+	wood       = palette.Copper
+	darkWood   = palette.Bark
+	ballShadow = ui.Faded(palette.Ink, 120)
 )
 
 // polar returns the point at the given angle, clockwise from the top, and

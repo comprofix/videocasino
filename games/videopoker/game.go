@@ -53,7 +53,7 @@ const (
 )
 
 // felt is the table the cards lie on.
-var felt = color.RGBA{0, 0, 96, 255}
+var felt = palette.Indigo
 
 type scene int
 

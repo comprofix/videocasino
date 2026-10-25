@@ -50,8 +50,8 @@ const (
 // The table: a dark teal with a brass edge, so that the game has a look of
 // its own.
 var (
-	felt  = color.RGBA{0, 60, 64, 255}
-	brass = color.RGBA{184, 140, 52, 255}
+	felt  = palette.DeepTeal
+	brass = palette.Caramel
 )
 
 // shuffleLength is the shuffle shown before every hand: a single deck, so

@@ -52,13 +52,13 @@ const (
 	dealTicks = 16
 )
 
-// The table: a dark forest green with an old-gold edge, and the bets ringed
-// in black and named in yellow, as on a real table.
+// The table: a dark slate green with a honey-gold edge, and the bets ringed
+// in near-black and named in gold, as on a real table.
 var (
-	felt    = color.RGBA{12, 52, 28, 255}
-	oldGold = color.RGBA{212, 175, 55, 255}
-	ring    = color.RGBA{0, 0, 0, 255}
-	letter  = color.RGBA{255, 214, 64, 255}
+	felt    = palette.Slate
+	oldGold = palette.Honey
+	ring    = palette.Ink
+	letter  = palette.Gold
 )
 
 // shuffleLength is the shuffle shown before every hand: a single deck, so
