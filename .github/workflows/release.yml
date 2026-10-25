@@ -110,6 +110,16 @@ jobs:
           merge-multiple: true
       - name: Checksums
         run: cd dist && sha256sum * > SHA256SUMS.txt
+      # The release is titled with the tag's message. The checkout may hold
+      # the tag without it, so the tag is fetched again whole.
+      - name: Release title
+        run: |
+          git fetch --force origin "refs/tags/$GITHUB_REF_NAME:refs/tags/$GITHUB_REF_NAME"
+          if [ "$(git cat-file -t "$GITHUB_REF_NAME")" != tag ]; then
+            echo "$GITHUB_REF_NAME is not an annotated tag" >&2
+            exit 1
+          fi
+          git tag -l --format='%(contents:subject)' "$GITHUB_REF_NAME" > title.txt
       # The notes are this version's section of CHANGELOG.md, as committed
       # in the release commit, without its heading.
       - name: Release notes
@@ -130,7 +140,7 @@ jobs:
             gh release upload "$GITHUB_REF_NAME" dist/* --clobber
           else
             gh release create "$GITHUB_REF_NAME" dist/* \
-              --title "Video Casino $GITHUB_REF_NAME" \
+              --title "$(cat title.txt)" \
               --notes-file notes.md \
               --verify-tag
           fi
