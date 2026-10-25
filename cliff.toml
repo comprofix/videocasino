@@ -1,0 +1,57 @@
+# git-cliff settings: adds each new version to CHANGELOG.md from the
+# Conventional Commits since the last tag, in the Keep a Changelog format.
+#
+#	git cliff --unreleased                                      # preview the next section
+#	git cliff --unreleased --tag vX.Y.Z --prepend CHANGELOG.md  # add it before tagging
+#
+# A release's notes are its section of CHANGELOG.md as committed, so tidy
+# the wording before the release commit (.github/workflows/release.yml).
+#
+# Version 1.0.0 came before Conventional Commits and is written
+# by hand in CHANGELOG.md, so never regenerate the whole file.
+
+[changelog]
+header = """
+# Changelog
+
+All notable changes to Video Casino are listed here.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+"""
+body = """
+{% if version -%}
+## [{{ version | trim_start_matches(pat="v") }}]\
+(https://github.com/comprofix/videocasino/compare/{{ previous.version }}...{{ version }}) - {{ timestamp | date(format="%Y-%m-%d") }}
+{% else -%}
+## [Unreleased]
+{% endif %}
+{%- for group, commits in commits | group_by(attribute="group") %}
+### {{ group | striptags | trim }}
+
+{% for commit in commits -%}
+- {% if commit.scope %}{{ commit.scope }}: {% endif %}{% if commit.breaking %}**Breaking:** {% endif %}{{ commit.message | upper_first }}
+{% endfor %}
+{%- endfor %}
+
+"""
+trim = true
+
+[git]
+conventional_commits = true
+filter_unconventional = true
+split_commits = false
+protect_breaking_commits = true
+tag_pattern = "v[0-9]+\\.[0-9]+\\.[0-9]+"
+sort_commits = "oldest"
+# The order of the sections follows Keep a Changelog; the HTML comments
+# sort them and are stripped from the headings.
+commit_parsers = [
+  { message = "^chore\\(release\\)", skip = true },
+  { message = "^feat", group = "<!-- 0 -->Added" },
+  { message = "^perf", group = "<!-- 1 -->Changed" },
+  { message = "^revert", group = "<!-- 2 -->Removed" },
+  { message = "^fix", group = "<!-- 3 -->Fixed" },
+  { message = "^(docs|style|refactor|test|build|ci|chore)", skip = true },
+]
