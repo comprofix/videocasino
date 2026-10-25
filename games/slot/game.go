@@ -571,7 +571,7 @@ func (g *Game) shownWin() *machine.LineWin {
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(palette.Ink)
-	ui.DrawBorder(screen, palette.Forest)
+	ui.DrawBorder(screen, palette.Emerald)
 
 	switch g.scene {
 	case sceneMenu:
@@ -668,8 +668,8 @@ func (g *Game) drawPlay(screen *ebiten.Image) {
 	inFree := g.free.active || g.m.FreeSpins > 0
 	g.drawStatus(screen, inFree)
 
-	// The magenta frame shows through the gaps between the reels.
-	ui.FillRect(screen, reelsX-5, reelsY-5, reelsW+10, reelsH+10, palette.Grape)
+	// The lavender frame shows through the gaps between the reels.
+	ui.FillRect(screen, reelsX-5, reelsY-5, reelsW+10, reelsH+10, palette.Lavender)
 	var win *machine.LineWin
 	if g.link.show {
 		g.drawLinkGrid(screen)
@@ -793,24 +793,19 @@ func cellCentre(reel, row int) (x, y float64) {
 		reelsY + float64(row)*rowH + rowH/2
 }
 
-// lineColor gives each payline its own colour. Stepping the hue by a large
-// odd amount keeps neighbouring lines well apart.
+// lineColours are the bright colours of the palette, round the colour
+// wheel, that paylines are drawn in. White stands in for Lavender, which
+// would be lost against the reels' lavender frame.
+var lineColours = []color.Color{
+	palette.Red, palette.Orange, palette.Gold, palette.Lemon,
+	palette.Lime, palette.Leaf, palette.Emerald, palette.Aqua,
+	palette.Sky, palette.Blue, palette.White, palette.Flamingo,
+}
+
+// lineColor gives each payline its colour. Stepping five places round the
+// twelve colours keeps neighbouring lines well apart.
 func lineColor(line int) color.Color {
-	h := float64(line*137%360) / 60
-	x := uint8(255 * (1 - math.Abs(math.Mod(h, 2)-1)))
-	switch int(h) {
-	case 0:
-		return color.RGBA{255, x, 0, 255}
-	case 1:
-		return color.RGBA{x, 255, 0, 255}
-	case 2:
-		return color.RGBA{0, 255, x, 255}
-	case 3:
-		return color.RGBA{0, x, 255, 255}
-	case 4:
-		return color.RGBA{x, 0, 255, 255}
-	}
-	return color.RGBA{255, 0, x, 255}
+	return lineColours[line*5%len(lineColours)]
 }
 
 // drawPayline draws a payline's path across the reels, with its number at
@@ -966,7 +961,7 @@ func (g *Game) drawPaytable(screen *ebiten.Image, win *machine.LineWin) {
 		pays, title = &machine.FreePays, "FREE GAMES PAY"
 	}
 
-	ui.FrameRect(screen, panelX, top, panelW, panelH, 2, palette.Grape)
+	ui.FrameRect(screen, panelX, top, panelW, panelH, 2, palette.Lavender)
 	ui.DrawText(screen, title, panelX+panelW/2, top+5, 15, palette.Gold, ui.AlignCenter, ui.AlignStart)
 	for n := 2; n <= machine.Reels; n++ {
 		if free && n < 4 {

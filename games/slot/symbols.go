@@ -11,13 +11,13 @@ import (
 	"videocasino/ui"
 )
 
-// The game's own colours, which the palette has no good match for.
+// The colours the slot gives its own parts.
 var (
-	reelBack = color.RGBA{16, 16, 24, 255}
-	plumSkin = color.RGBA{120, 70, 220, 255}
-	plumGlow = color.RGBA{175, 135, 255, 255}
-	goldDark = color.RGBA{190, 110, 0, 255}
-	chipFelt = color.RGBA{0, 0, 96, 255}
+	reelBack = palette.Ink
+	plumSkin = palette.Violet
+	plumGlow = palette.Lavender
+	goldDark = palette.Copper
+	chipFelt = palette.Indigo
 )
 
 // The colour of each card symbol.
