@@ -6,9 +6,15 @@
 /save.json
 /save.json.tmp
 
-# Local notes
-/CLAUDE.md
-/PLAN.md
+# Personal working documents (not tracked)
+CLAUDE.md
+CLAUDE.local.md
+AGENTS.md
+DESIGN.md
+PLAN.md
+.mcp.json
+.worktreeinclude
+.claude/
 
 # The exe icon, made for a release build
 /videocasino.ico
