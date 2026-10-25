@@ -5,6 +5,17 @@ All notable changes to Video Casino are listed here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0](https://github.com/comprofix/videocasino/compare/v1.0.0...v1.1.0) - 2026-10-25
+
+### Changed
+
+- Everything is repainted in the Resurrect 64 palette: the main menu, the
+  menus and confirm box, the cards and chips, and each game's felt and
+  border.
+- The slot has dark reels in a lavender frame, and every payline is easy
+  to tell from the frame. The jackpot bars keep their colours.
+- The program icon is repainted to match.
+
 ## [1.0.0](https://github.com/comprofix/videocasino/releases/tag/v1.0.0) - 2026-10-24
 
 ### Added
