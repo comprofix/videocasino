@@ -3,6 +3,8 @@ package ui
 import (
 	"image"
 	"image/color"
+
+	"videocasino/palette"
 )
 
 // The window's icon is an old one-armed bandit: a red cabinet trimmed in
@@ -20,15 +22,15 @@ var WindowIconSizes = []int{16, 32, 48, 64}
 const iconDetail = 32
 
 var (
-	iconRed     = color.RGBA{200, 20, 20, 255}
-	iconDarkRed = color.RGBA{110, 0, 0, 255}
-	iconGold    = color.RGBA{255, 170, 0, 255}
-	iconSilver  = color.RGBA{200, 200, 210, 255}
-	iconBall    = color.RGBA{230, 30, 30, 255}
-	iconShine   = color.RGBA{255, 170, 170, 255}
-	iconWindow  = color.RGBA{30, 30, 30, 255}
-	iconReel    = color.RGBA{255, 255, 255, 255}
-	iconSeven   = color.RGBA{210, 0, 0, 255}
+	iconRed     = palette.Crimson
+	iconDarkRed = palette.Maroon
+	iconGold    = palette.Amber
+	iconSilver  = palette.Mist
+	iconBall    = palette.Red
+	iconShine   = palette.Salmon
+	iconWindow  = palette.Ink
+	iconReel    = palette.White
+	iconSeven   = palette.Crimson
 )
 
 // iconShape is one shape of the icon: whether a point of the grid is in it,
